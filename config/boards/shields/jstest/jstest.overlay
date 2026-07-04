@@ -59,9 +59,9 @@
 
         x-ch {
             io-channels = <&adc 0>;
-            mv-mid = <1650>;          /* ~3.3V / 2, ajuste apos ler o centro */
-            mv-min-max = <1600>;      /* swing util em torno do centro */
-            mv-deadzone = <20>;       /* zona morta central, em mV */
+            mv-mid = <1660>;          /* medido: centro X ~1662 mV */
+            mv-min-max = <1600>;      /* swing medido ~1660; 1600 => full speed pouco antes do extremo */
+            mv-deadzone = <30>;       /* zona morta central, em mV */
             scale-multiplier = <1>;
             scale-divisor = <70>;     /* maior = cursor mais lento */
             evt-type = <INPUT_EV_REL>;
@@ -70,9 +70,9 @@
 
         y-ch {
             io-channels = <&adc 1>;
-            mv-mid = <1650>;
+            mv-mid = <1710>;          /* medido: centro Y ~1712 mV */
             mv-min-max = <1600>;
-            mv-deadzone = <20>;
+            mv-deadzone = <30>;
             scale-multiplier = <1>;
             scale-divisor = <70>;
             evt-type = <INPUT_EV_REL>;
