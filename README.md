@@ -1,7 +1,8 @@
 # zmk-config — teste do joystick
 
 Firmware ZMK mínimo pra testar **só o joystick analógico** como mouse, no
-ProMicro nRF52840 (clone nice!nano). Board target: `nice_nano_v2`.
+ProMicro nRF52840 (clone nice!nano). Board target: `nice_nano//zmk`
+(no Zephyr 4.1 o antigo `nice_nano_v2` virou `nice_nano//zmk`).
 
 ## Fiação
 
@@ -26,7 +27,7 @@ ProMicro nRF52840 (clone nice!nano). Board target: `nice_nano_v2`.
    git push -u origin main
    ```
 2. Vá na aba **Actions** do repo. O build roda sozinho no push.
-3. Ao terminar, baixe o artefato **`firmware`** → dentro tem `jstest nice_nano_v2.uf2`.
+3. Ao terminar, baixe o artefato **`firmware`** → dentro tem `jstest-nice_nano__zmk-zmk.uf2`.
 
 ## Como gravar (flash)
 
