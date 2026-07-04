@@ -4,3 +4,4 @@
 include:
   - board: nice_nano//zmk
     shield: jstest
+    snippet: zmk-usb-logging   # habilita o log via USB (CDC-ACM) p/ diagnostico
