@@ -1,0 +1,6 @@
+# Matriz de builds do GitHub Actions.
+# Só um alvo: board nice_nano_v2 (compatível com o ProMicro nRF52840 clone)
+# + o shield de teste do joystick.
+include:
+  - board: nice_nano_v2
+    shield: jstest

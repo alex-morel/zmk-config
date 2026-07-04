@@ -1,0 +1,8 @@
+# Artefatos de build (o build roda no GitHub Actions, não local)
+build/
+.west/
+*.uf2
+
+# Sistema
+.DS_Store
+Thumbs.db

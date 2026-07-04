@@ -1,0 +1,89 @@
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/adc/nrf-saadc-v2.h>
+
+/*
+ * Shield de teste do joystick analogico (PSP, 2 eixos).
+ *
+ * Eixo X -> D19 = P0.02 = AIN0
+ * Eixo Y -> D20 = P0.29 = AIN5
+ *
+ * Alimente o joystick em 3.3V / GND. Nao use 5V (satura o ADC).
+ */
+
+/* ---- ADC: define os 2 canais que leem os eixos do joystick ---- */
+&adc {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    /* Canal 0 = eixo X = AIN0 (P0.02 / D19) */
+    channel@0 {
+        reg = <0>;
+        zephyr,gain = "ADC_GAIN_1_6";              /* full scale ~3.6V, cobre 3.3V */
+        zephyr,reference = "ADC_REF_INTERNAL";     /* 0.6V interna */
+        zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 10)>;
+        zephyr,input-positive = <NRF_SAADC_AIN0>;  /* P0.02 */
+        zephyr,resolution = <12>;
+    };
+
+    /* Canal 1 = eixo Y = AIN5 (P0.29 / D20) */
+    channel@1 {
+        reg = <1>;
+        zephyr,gain = "ADC_GAIN_1_6";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 10)>;
+        zephyr,input-positive = <NRF_SAADC_AIN5>;  /* P0.29 */
+        zephyr,resolution = <12>;
+    };
+};
+
+/ {
+    /* ---- kscan minimo (1 tecla) so pra o ZMK compilar/bootar ----
+     * Nao precisa fiar nada: usa pull-up interno e um pino livre (D16).
+     * O foco deste build eh testar o joystick, nao a matriz.
+     */
+    chosen {
+        zmk,kscan = &kscan0;
+    };
+
+    kscan0: kscan0 {
+        compatible = "zmk,kscan-gpio-direct";
+        wakeup-source;
+        input-gpios = <&pro_micro 16 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+    };
+
+    /* ---- Joystick analogico como input device ---- */
+    anin0: analog_input_0 {
+        compatible = "zmk,analog-input";
+        sampling-hz = <100>;
+
+        x-ch {
+            io-channels = <&adc 0>;
+            mv-mid = <1650>;          /* ~3.3V / 2, ajuste apos ler o centro */
+            mv-min-max = <1600>;      /* swing util em torno do centro */
+            mv-deadzone = <20>;       /* zona morta central, em mV */
+            scale-multiplier = <1>;
+            scale-divisor = <70>;     /* maior = cursor mais lento */
+            evt-type = <INPUT_EV_REL>;
+            input-code = <INPUT_REL_X>;
+        };
+
+        y-ch {
+            io-channels = <&adc 1>;
+            mv-mid = <1650>;
+            mv-min-max = <1600>;
+            mv-deadzone = <20>;
+            scale-multiplier = <1>;
+            scale-divisor = <70>;
+            evt-type = <INPUT_EV_REL>;
+            input-code = <INPUT_REL_Y>;
+            /* invert;  <-- descomente se o eixo Y ficar invertido */
+        };
+    };
+
+    /* ---- Liga o joystick ao HID de mouse ---- */
+    anin0_listener {
+        compatible = "zmk,input-listener";
+        device = <&anin0>;
+    };
+};

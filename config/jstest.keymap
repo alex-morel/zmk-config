@@ -1,0 +1,13 @@
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+
+        default_layer {
+            /* Uma unica tecla (kscan de 1 posicao). So pra o build ser valido. */
+            bindings = <&kp A>;
+        };
+    };
+};

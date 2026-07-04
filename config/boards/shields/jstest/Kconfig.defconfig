@@ -1,0 +1,6 @@
+if SHIELD_JSTEST
+
+config ZMK_KEYBOARD_NAME
+    default "JoystickTest"
+
+endif
