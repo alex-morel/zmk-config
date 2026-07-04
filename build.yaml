@@ -1,6 +1,6 @@
 # Matriz de builds do GitHub Actions.
-# Só um alvo: board nice_nano_v2 (compatível com o ProMicro nRF52840 clone)
-# + o shield de teste do joystick.
+# Board nice!nano v2 (compatível com o ProMicro nRF52840 clone) + shield jstest.
+# ZMK migrou pro Zephyr 4.1: o board virou "nice_nano//zmk" (era nice_nano_v2).
 include:
-  - board: nice_nano_v2
+  - board: nice_nano//zmk
     shield: jstest
