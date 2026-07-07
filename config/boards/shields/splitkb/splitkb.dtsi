@@ -1,6 +1,7 @@
 #include <dt-bindings/zmk/matrix_transform.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 #include <zephyr/dt-bindings/adc/nrf-saadc-v2.h>
+#include <input/processors.dtsi>   // define os &zip_* (input processors, ex.: scroll)
 
 /*
  * Teclado split custom (nRF52840 / nice!nano). 23 teclas por lado.
