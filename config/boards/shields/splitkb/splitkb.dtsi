@@ -62,8 +62,13 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
      * via input-split. O listener (no central) reporta como mouse; na layer 1
      * o processor transforma o movimento em SCROLL.
      */
-    jsr_split: jsr_split {
-        compatible = "zmk,input-split";
+    splits {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        jsr_split: jsr_split@0 {
+            compatible = "zmk,input-split";
+            reg = <0>;
+        };
     };
 
     jsr_listener: jsr_listener {
