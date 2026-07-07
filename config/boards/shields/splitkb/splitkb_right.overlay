@@ -1,0 +1,56 @@
+#include "splitkb.dtsi"
+
+/* Lado direito: as colunas viram 6..11 no transform */
+&default_transform {
+    col-offset = <6>;
+};
+
+/* Colunas do lado DIREITO — ordem REVERSA (espelhado) */
+&kscan0 {
+    col-gpios
+        = <&pro_micro 21 GPIO_ACTIVE_HIGH>
+        , <&pro_micro 18 GPIO_ACTIVE_HIGH>
+        , <&pro_micro 16 GPIO_ACTIVE_HIGH>
+        , <&pro_micro 10 GPIO_ACTIVE_HIGH>
+        , <&pro_micro 9  GPIO_ACTIVE_HIGH>
+        , <&pro_micro 8  GPIO_ACTIVE_HIGH>
+        ;
+};
+
+/ {
+    /*
+     * Joystick DIREITO (periférica). Alimenta o input-split -> vai pro central.
+     * Papel: cursor por padrão; na layer 1 vira scroll (definido no listener,
+     * no lado central). Centros iguais ao esquerdo por ora — calibrar depois.
+     */
+    anin_right: analog_input_right {
+        compatible = "zmk,analog-input";
+        sampling-hz = <100>;
+
+        x-ch {
+            io-channels = <&adc 0>;
+            mv-mid = <1660>;
+            mv-min-max = <1600>;
+            mv-deadzone = <30>;
+            scale-multiplier = <1>;
+            scale-divisor = <70>;
+            evt-type = <INPUT_EV_REL>;
+            input-code = <INPUT_REL_X>;
+        };
+        y-ch {
+            io-channels = <&adc 1>;
+            mv-mid = <1710>;
+            mv-min-max = <1600>;
+            mv-deadzone = <30>;
+            scale-multiplier = <1>;
+            scale-divisor = <70>;
+            evt-type = <INPUT_EV_REL>;
+            input-code = <INPUT_REL_Y>;
+        };
+    };
+};
+
+/* Conecta o joystick direito ao input-split (lado periférica). */
+&jsr_split {
+    device = <&anin_right>;
+};

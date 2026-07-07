@@ -2,5 +2,11 @@
 # Board nice!nano v2 (compatível com o ProMicro nRF52840 clone) + shield jstest.
 # ZMK migrou pro Zephyr 4.1: o board virou "nice_nano//zmk" (era nice_nano_v2).
 include:
+  # Teste isolado do joystick (validado)
   - board: nice_nano//zmk
     shield: jstest
+  # Teclado split real — dois lados
+  - board: nice_nano//zmk
+    shield: splitkb_left
+  - board: nice_nano//zmk
+    shield: splitkb_right

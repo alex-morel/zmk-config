@@ -1,0 +1,13 @@
+file_format: "1"
+id: splitkb
+name: SplitKB (custom nRF52840)
+type: shield
+requires: [pro_micro]
+exposes: [i2c_oled]
+features:
+  - keys
+  - display
+  - pointer
+siblings:
+  - splitkb_left
+  - splitkb_right
