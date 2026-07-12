@@ -35,7 +35,7 @@
             scale-multiplier = <1>;
             scale-divisor = <70>;
             evt-type = <INPUT_EV_REL>;
-            input-code = <INPUT_REL_X>;
+            input-code = <INPUT_REL_Y>;
         };
         y-ch {
             io-channels = <&adc 1>;
@@ -45,7 +45,7 @@
             scale-multiplier = <1>;
             scale-divisor = <70>;
             evt-type = <INPUT_EV_REL>;
-            input-code = <INPUT_REL_Y>;
+            input-code = <INPUT_REL_X>;
         };
     };
 };
