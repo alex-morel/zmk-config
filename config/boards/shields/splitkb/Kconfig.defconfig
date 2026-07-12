@@ -22,6 +22,24 @@ config I2C
 config SSD1306
     default y
 
+# Usa a tela de status CUSTOM (retrato) — ver custom_status_screen.c
+choice ZMK_DISPLAY_STATUS_SCREEN
+    default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
+endchoice
+
+# Widgets usados pela tela custom (com CUSTOM eles nao vem por padrao)
+config ZMK_WIDGET_LAYER_STATUS
+    default y
+
+config ZMK_WIDGET_BATTERY_STATUS
+    default y
+
+config ZMK_WIDGET_OUTPUT_STATUS
+    default y
+
+config ZMK_WIDGET_PERIPHERAL_STATUS
+    default y
+
 endif # ZMK_DISPLAY
 
 if LVGL
