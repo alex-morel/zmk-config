@@ -47,11 +47,11 @@ static uint8_t g_battery = 0;
 static uint8_t g_layer = 0;
 #endif
 
-static void draw_text(lv_coord_t y, lv_coord_t h, const char *txt) {
+static void draw_text(lv_coord_t y, lv_coord_t h, const char *txt, const lv_font_t *font) {
     lv_draw_label_dsc_t dsc;
     lv_draw_label_dsc_init(&dsc);
     dsc.color = lv_color_black();
-    dsc.font = &lv_font_montserrat_16;
+    dsc.font = font;
     dsc.align = LV_TEXT_ALIGN_CENTER;
     dsc.text = txt;
 
@@ -62,6 +62,23 @@ static void draw_text(lv_coord_t y, lv_coord_t h, const char *txt) {
     lv_canvas_finish_layer(g_draw, &layer);
 }
 
+/* barra diagonal (pra "cortar" o zero, estilo Big-O) */
+static void draw_line(lv_coord_t x1, lv_coord_t y1, lv_coord_t x2, lv_coord_t y2) {
+    lv_draw_line_dsc_t dsc;
+    lv_draw_line_dsc_init(&dsc);
+    dsc.color = lv_color_black();
+    dsc.width = 3;
+    dsc.p1.x = x1;
+    dsc.p1.y = y1;
+    dsc.p2.x = x2;
+    dsc.p2.y = y2;
+
+    lv_layer_t layer;
+    lv_canvas_init_layer(g_draw, &layer);
+    lv_draw_line(&layer, &dsc);
+    lv_canvas_finish_layer(g_draw, &layer);
+}
+
 static void redraw(void) {
     if (g_draw == NULL) {
         return;
@@ -69,12 +86,20 @@ static void redraw(void) {
     lv_canvas_fill_bg(g_draw, lv_color_white(), LV_OPA_COVER);
 
     char buf[16];
+
+    /* --- header estiloso "the big 0" (empilhado, tamanhos diferentes) --- */
+    draw_text(0, 12, "the", &lv_font_montserrat_8);   /* menor fonte */
+    draw_text(10, 24, "big", &lv_font_montserrat_20); /* preenche a largura */
+    draw_text(32, 46, "0", &lv_font_montserrat_40);   /* bem grande */
+    draw_line(8, 74, 24, 38);                         /* barra cortando o zero */
+
+    /* --- widgets (embaixo do header) --- */
 #if SHOW_LAYER
     snprintf(buf, sizeof(buf), "L%d", g_layer);
-    draw_text(6, 24, buf);
+    draw_text(82, 20, buf, &lv_font_montserrat_16);
 #endif
     snprintf(buf, sizeof(buf), "%d%%", g_battery);
-    draw_text(DW - 30, 24, buf);
+    draw_text(104, 24, buf, &lv_font_montserrat_16);
 
     /* rotaciona draw_buf (32x128) -> out_buf (128x32), 90 graus */
     uint32_t ss = lv_draw_buf_width_to_stride(DH, CF);
