@@ -66,6 +66,7 @@
             scale-divisor = <70>;     /* maior = cursor mais lento */
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_Y>;
+            invert;                   /* cima<->baixo invertido (eixo vertical) */
         };
 
         y-ch {
