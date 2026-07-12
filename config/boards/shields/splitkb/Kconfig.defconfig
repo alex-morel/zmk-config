@@ -22,26 +22,36 @@ config I2C
 config SSD1306
     default y
 
-# (DIAGNOSTICO) Tela custom (retrato) desativada -> usa a BUILT-IN do ZMK.
-# Pra reativar o retrato: descomente o bloco abaixo.
-# choice ZMK_DISPLAY_STATUS_SCREEN
-#     default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
-# endchoice
-# config ZMK_WIDGET_LAYER_STATUS
-#     default y if SHIELD_SPLITKB_LEFT
-# config ZMK_WIDGET_BATTERY_STATUS
-#     default y if SHIELD_SPLITKB_LEFT
-# config ZMK_WIDGET_OUTPUT_STATUS
-#     default y if SHIELD_SPLITKB_LEFT
-# config ZMK_WIDGET_PERIPHERAL_STATUS
-#     default y if SHIELD_SPLITKB_RIGHT
+# Tela de status CUSTOM (retrato) — ver custom_status_screen.c
+choice ZMK_DISPLAY_STATUS_SCREEN
+    default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
+endchoice
+
+# Widgets (com CUSTOM nao vem por padrao). Central=layer/bateria/output;
+# periferica=peripheral_status (usa funcao peripheral-only, so no direito).
+config ZMK_WIDGET_LAYER_STATUS
+    default y if SHIELD_SPLITKB_LEFT
+
+config ZMK_WIDGET_BATTERY_STATUS
+    default y if SHIELD_SPLITKB_LEFT
+
+config ZMK_WIDGET_OUTPUT_STATUS
+    default y if SHIELD_SPLITKB_LEFT
+
+config ZMK_WIDGET_PERIPHERAL_STATUS
+    default y if SHIELD_SPLITKB_RIGHT
 
 endif # ZMK_DISPLAY
 
 if LVGL
 
+# Full refresh + framebuffer inteiro: NECESSARIO pra rotacao por software
+# (a tela custom retrato gira 90 graus; sem isso escreve lixo / trava).
+config LV_Z_FULL_REFRESH
+    default y
+
 config LV_Z_VDB_SIZE
-    default 64
+    default 100
 
 config LV_DPI_DEF
     default 148

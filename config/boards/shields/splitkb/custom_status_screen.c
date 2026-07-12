@@ -34,8 +34,11 @@ static struct zmk_widget_layer_status layer_status_widget;
 #endif
 
 lv_obj_t *zmk_display_status_screen() {
-    /* Gira o display 90 graus -> retrato (LVGL 9). */
-    lv_display_set_rotation(lv_display_get_default(), LV_DISPLAY_ROTATION_90);
+    /* Gira o display 90 graus -> retrato (LVGL 9). Precisa de LV_Z_FULL_REFRESH. */
+    lv_display_t *disp = lv_display_get_default();
+    if (disp != NULL) {
+        lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90);
+    }
 
     lv_obj_t *screen = lv_obj_create(NULL);
 
