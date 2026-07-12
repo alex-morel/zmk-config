@@ -47,12 +47,6 @@ config LV_FONT_MONTSERRAT_8
 config LV_FONT_MONTSERRAT_16
     default y
 
-config LV_FONT_MONTSERRAT_20
-    default y
-
-config LV_FONT_MONTSERRAT_40
-    default y
-
 config LV_USE_CANVAS
     default y
 

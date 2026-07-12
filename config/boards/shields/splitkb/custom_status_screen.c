@@ -22,6 +22,9 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
+/* fonte custom (bigzero.c) com o glifo Ø (zero cortado) grande */
+LV_FONT_DECLARE(bigzero);
+
 /* Camada/keymap so existem na central (ou em teclado nao-split). */
 #if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 #define SHOW_LAYER 1
@@ -90,8 +93,7 @@ static void redraw(void) {
     /* --- header "the big 0" (empilhado, tamanhos diferentes) --- */
     draw_text(0, 12, "the", &lv_font_montserrat_8);   /* menor fonte */
     draw_text(10, 22, "big", &lv_font_montserrat_16); /* 16 cabe as 3 letras em 32px */
-    draw_text(30, 46, "0", &lv_font_montserrat_40);   /* bem grande */
-    draw_line(9, 70, 23, 40);                         /* barra cortando o zero */
+    draw_text(28, 44, "\xC3\x98", &bigzero);          /* Ø = zero cortado (fonte custom) */
 
     /* --- widgets (embaixo do header) --- */
 #if SHOW_LAYER
