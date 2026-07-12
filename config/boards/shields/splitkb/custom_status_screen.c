@@ -1,17 +1,24 @@
 /*
  * Tela de status em RETRATO para OLED SSD1306 (128x32) montada girada 90 graus.
  *
- * O ZMK/LVGL NAO consegue rotacionar o display mono por software
- * (bug conhecido: zmkfirmware/zmk#1749). A solucao (usada pelo nice!view):
- * desenhar num CANVAS em formato L8 e rotacionar o BUFFER do canvas com
- * lv_draw_sw_rotate (L8 = menor formato suportado pelo sw_rotate; 1-bit falha).
+ * ZMK/LVGL nao rotaciona display mono por software (issue #1749). Solucao
+ * (nice!view): desenha num CANVAS L8 e rotaciona o BUFFER com lv_draw_sw_rotate.
+ * Precisa de: LV_USE_CANVAS, work queue dedicada, mem pool grande (Kconfig.defconfig).
  *
- * ESTA VERSAO E UM TESTE ESTATICO: so um texto rotacionado, pra validar a
- * tecnica no hardware. Se funcionar, adiciono os widgets vivos (layer/bateria).
+ * Mostra: camada atual (topo) e bateria (base). Atualiza via eventos do ZMK.
  */
 
+#include <stdio.h>
+#include <zephyr/kernel.h>
 #include <lvgl.h>
+
+#include <zmk/display.h>
 #include <zmk/display/status_screen.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/layer_state_changed.h>
+#include <zmk/events/battery_state_changed.h>
+#include <zmk/keymap.h>
+#include <zmk/battery.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -21,47 +28,100 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define CF LV_COLOR_FORMAT_L8
 #define BPP LV_COLOR_FORMAT_GET_BPP(CF)
 
-/* canvas de DESENHO: retrato (DH de largura x DW de altura = 32 x 128) */
+/* canvas de DESENHO em retrato (32 x 128) e de SAIDA na orientacao do display (128 x 32) */
 static uint8_t draw_buf[LV_CANVAS_BUF_SIZE(DH, DW, BPP, LV_DRAW_BUF_STRIDE_ALIGN)];
-/* canvas de SAIDA: orientacao do display (128 x 32), recebe o buffer rotacionado */
 static uint8_t out_buf[LV_CANVAS_BUF_SIZE(DW, DH, BPP, LV_DRAW_BUF_STRIDE_ALIGN)];
+
+static lv_obj_t *g_draw; /* canvas retrato (oculto), onde desenhamos */
+static lv_obj_t *g_out;  /* canvas mostrado, recebe o buffer rotacionado */
+
+static uint8_t g_layer = 0;
+static uint8_t g_battery = 0;
+
+static void draw_text(lv_coord_t y, lv_coord_t h, const char *txt) {
+    lv_draw_label_dsc_t dsc;
+    lv_draw_label_dsc_init(&dsc);
+    dsc.color = lv_color_black();
+    dsc.font = &lv_font_montserrat_16;
+    dsc.align = LV_TEXT_ALIGN_CENTER;
+    dsc.text = txt;
+
+    lv_layer_t layer;
+    lv_canvas_init_layer(g_draw, &layer);
+    lv_area_t coords = {0, y, DH, y + h};
+    lv_draw_label(&layer, &dsc, &coords);
+    lv_canvas_finish_layer(g_draw, &layer);
+}
+
+static void redraw(void) {
+    if (g_draw == NULL) {
+        return;
+    }
+    lv_canvas_fill_bg(g_draw, lv_color_white(), LV_OPA_COVER);
+
+    char buf[16];
+    snprintf(buf, sizeof(buf), "L%d", g_layer);
+    draw_text(6, 24, buf);
+
+    snprintf(buf, sizeof(buf), "%d%%", g_battery);
+    draw_text(DW - 30, 24, buf);
+
+    /* rotaciona draw_buf (32x128) -> out_buf (128x32), 90 graus */
+    uint32_t ss = lv_draw_buf_width_to_stride(DH, CF);
+    uint32_t ds = lv_draw_buf_width_to_stride(DW, CF);
+    lv_draw_sw_rotate(draw_buf, out_buf, DH, DW, ss, ds, LV_DISPLAY_ROTATION_90, CF);
+
+    if (g_out != NULL) {
+        lv_obj_invalidate(g_out);
+    }
+}
+
+/* ---------- listener de CAMADA ---------- */
+struct layer_state {
+    uint8_t index;
+};
+static struct layer_state layer_get_state(const zmk_event_t *eh) {
+    return (struct layer_state){.index = zmk_keymap_highest_layer_active()};
+}
+static void layer_update_cb(struct layer_state s) {
+    g_layer = s.index;
+    redraw();
+}
+ZMK_DISPLAY_WIDGET_LISTENER(splitkb_layer, struct layer_state, layer_update_cb, layer_get_state)
+ZMK_SUBSCRIPTION(splitkb_layer, zmk_layer_state_changed);
+
+/* ---------- listener de BATERIA ---------- */
+struct batt_state {
+    uint8_t level;
+};
+static struct batt_state batt_get_state(const zmk_event_t *eh) {
+    const struct zmk_battery_state_changed *ev = as_zmk_battery_state_changed(eh);
+    return (struct batt_state){.level =
+                                   (ev != NULL) ? ev->state_of_charge : zmk_battery_state_of_charge()};
+}
+static void batt_update_cb(struct batt_state s) {
+    g_battery = s.level;
+    redraw();
+}
+ZMK_DISPLAY_WIDGET_LISTENER(splitkb_batt, struct batt_state, batt_update_cb, batt_get_state)
+ZMK_SUBSCRIPTION(splitkb_batt, zmk_battery_state_changed);
 
 lv_obj_t *zmk_display_status_screen() {
     lv_obj_t *screen = lv_obj_create(NULL);
 
-    /* canvas de saida (o que aparece na tela) */
-    lv_obj_t *out = lv_canvas_create(screen);
-    lv_canvas_set_buffer(out, out_buf, DW, DH, CF);
-    lv_obj_align(out, LV_ALIGN_TOP_LEFT, 0, 0);
+    g_out = lv_canvas_create(screen);
+    lv_canvas_set_buffer(g_out, out_buf, DW, DH, CF);
+    lv_obj_align(g_out, LV_ALIGN_TOP_LEFT, 0, 0);
 
-    /* canvas de desenho, em retrato (32 x 128) — temporario */
-    lv_obj_t *draw = lv_canvas_create(screen);
-    lv_canvas_set_buffer(draw, draw_buf, DH, DW, CF);
-    lv_canvas_fill_bg(draw, lv_color_white(), LV_OPA_COVER);
+    g_draw = lv_canvas_create(screen);
+    lv_canvas_set_buffer(g_draw, draw_buf, DH, DW, CF);
+    lv_obj_add_flag(g_draw, LV_OBJ_FLAG_HIDDEN);
 
-    /* desenha um texto de teste no canvas retrato */
-    lv_draw_label_dsc_t label_dsc;
-    lv_draw_label_dsc_init(&label_dsc);
-    label_dsc.color = lv_color_black();
-    label_dsc.font = &lv_font_montserrat_16;
-    label_dsc.align = LV_TEXT_ALIGN_CENTER;
-    label_dsc.text = "ZMK\nOK";
+    redraw();
 
-    lv_layer_t layer;
-    lv_canvas_init_layer(draw, &layer);
-    lv_area_t coords = {0, 8, DH, DW};
-    lv_draw_label(&layer, &label_dsc, &coords);
-    lv_canvas_finish_layer(draw, &layer);
-
-    /* rotaciona draw_buf (32x128) -> out_buf (128x32), 90 graus */
-    uint32_t src_stride = lv_draw_buf_width_to_stride(DH, CF);
-    uint32_t dst_stride = lv_draw_buf_width_to_stride(DW, CF);
-    lv_draw_sw_rotate(draw_buf, out_buf, DH, DW, src_stride, dst_stride,
-                      LV_DISPLAY_ROTATION_90, CF);
-
-    /* remove o canvas de desenho; so o de saida (rotacionado) fica visivel */
-    lv_obj_delete(draw);
-    lv_obj_invalidate(out);
+    /* dispara os listeners (chamam update_cb -> redraw com estado real) */
+    splitkb_layer_init();
+    splitkb_batt_init();
 
     return screen;
 }
