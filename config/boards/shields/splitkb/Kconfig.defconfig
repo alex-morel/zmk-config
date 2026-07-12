@@ -28,11 +28,22 @@ choice ZMK_DISPLAY_STATUS_SCREEN
     default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
 endchoice
 
-# Fonte usada pela tela custom
+# CRITICO (igual nice!view): desenho em canvas precisa de work queue dedicada
+# (stack maior) e mem pool maior. Sem isso o custom screen trava/estoura no boot.
+choice ZMK_DISPLAY_WORK_QUEUE
+    default ZMK_DISPLAY_WORK_QUEUE_DEDICATED
+endchoice
+
+config ZMK_DISPLAY_DEDICATED_THREAD_STACK_SIZE
+    default 4096
+
+config LV_Z_MEM_POOL_SIZE
+    default 8192
+
+# Fonte + widget canvas do LVGL
 config LV_FONT_MONTSERRAT_16
     default y
 
-# Widget canvas do LVGL (necessario p/ desenhar + rotacionar o buffer)
 config LV_USE_CANVAS
     default y
 
@@ -41,7 +52,7 @@ endif # ZMK_DISPLAY
 if LVGL
 
 config LV_Z_VDB_SIZE
-    default 64
+    default 100
 
 config LV_DPI_DEF
     default 148
