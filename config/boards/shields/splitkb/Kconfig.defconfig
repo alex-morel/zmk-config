@@ -22,36 +22,16 @@ config I2C
 config SSD1306
     default y
 
-# Tela de status CUSTOM (retrato) — ver custom_status_screen.c
-choice ZMK_DISPLAY_STATUS_SCREEN
-    default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
-endchoice
-
-# Widgets (com CUSTOM nao vem por padrao). Central=layer/bateria/output;
-# periferica=peripheral_status (usa funcao peripheral-only, so no direito).
-config ZMK_WIDGET_LAYER_STATUS
-    default y if SHIELD_SPLITKB_LEFT
-
-config ZMK_WIDGET_BATTERY_STATUS
-    default y if SHIELD_SPLITKB_LEFT
-
-config ZMK_WIDGET_OUTPUT_STATUS
-    default y if SHIELD_SPLITKB_LEFT
-
-config ZMK_WIDGET_PERIPHERAL_STATUS
-    default y if SHIELD_SPLITKB_RIGHT
+# Tela BUILT-IN do ZMK (landscape) — FUNCIONA nesta OLED.
+# A rotacao 90 (tela custom em custom_status_screen.c) trava a OLED mono,
+# entao fica desativada. Pra "retrato", monte o MODULO da OLED em landscape.
 
 endif # ZMK_DISPLAY
 
 if LVGL
 
-# Full refresh + framebuffer inteiro: NECESSARIO pra rotacao por software
-# (a tela custom retrato gira 90 graus; sem isso escreve lixo / trava).
-config LV_Z_FULL_REFRESH
-    default y
-
 config LV_Z_VDB_SIZE
-    default 100
+    default 64
 
 config LV_DPI_DEF
     default 148
