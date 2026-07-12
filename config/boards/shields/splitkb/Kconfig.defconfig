@@ -22,25 +22,19 @@ config I2C
 config SSD1306
     default y
 
-# Usa a tela de status CUSTOM (retrato) — ver custom_status_screen.c
-choice ZMK_DISPLAY_STATUS_SCREEN
-    default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
-endchoice
-
-# Widgets da tela custom (com CUSTOM nao vem por padrao).
-# CENTRAL (esquerdo): layer + bateria + output.
-# PERIFERICA (direito): peripheral_status (usa funcao peripheral-only).
-config ZMK_WIDGET_LAYER_STATUS
-    default y if SHIELD_SPLITKB_LEFT
-
-config ZMK_WIDGET_BATTERY_STATUS
-    default y if SHIELD_SPLITKB_LEFT
-
-config ZMK_WIDGET_OUTPUT_STATUS
-    default y if SHIELD_SPLITKB_LEFT
-
-config ZMK_WIDGET_PERIPHERAL_STATUS
-    default y if SHIELD_SPLITKB_RIGHT
+# (DIAGNOSTICO) Tela custom (retrato) desativada -> usa a BUILT-IN do ZMK.
+# Pra reativar o retrato: descomente o bloco abaixo.
+# choice ZMK_DISPLAY_STATUS_SCREEN
+#     default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
+# endchoice
+# config ZMK_WIDGET_LAYER_STATUS
+#     default y if SHIELD_SPLITKB_LEFT
+# config ZMK_WIDGET_BATTERY_STATUS
+#     default y if SHIELD_SPLITKB_LEFT
+# config ZMK_WIDGET_OUTPUT_STATUS
+#     default y if SHIELD_SPLITKB_LEFT
+# config ZMK_WIDGET_PERIPHERAL_STATUS
+#     default y if SHIELD_SPLITKB_RIGHT
 
 endif # ZMK_DISPLAY
 
