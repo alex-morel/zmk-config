@@ -22,9 +22,15 @@ config I2C
 config SSD1306
     default y
 
-# Tela BUILT-IN do ZMK (landscape) — FUNCIONA nesta OLED.
-# A rotacao 90 (tela custom em custom_status_screen.c) trava a OLED mono,
-# entao fica desativada. Pra "retrato", monte o MODULO da OLED em landscape.
+# Tela CUSTOM em retrato via CANVAS rotacionado (nao usa rotacao de display,
+# que trava OLED mono). Ver custom_status_screen.c.
+choice ZMK_DISPLAY_STATUS_SCREEN
+    default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
+endchoice
+
+# Fonte usada pela tela custom
+config LV_FONT_MONTSERRAT_16
+    default y
 
 endif # ZMK_DISPLAY
 

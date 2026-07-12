@@ -1,70 +1,67 @@
 /*
- * Tela de status em RETRATO (portrait) para OLED montada girada 90 graus.
+ * Tela de status em RETRATO para OLED SSD1306 (128x32) montada girada 90 graus.
  *
- * O ZMK nao tem toggle de rotacao, entao aqui:
- *   1) giramos o display do LVGL em 90 graus (fica retrato);
- *   2) empilhamos os widgets na vertical.
+ * O ZMK/LVGL NAO consegue rotacionar o display mono por software
+ * (bug conhecido: zmkfirmware/zmk#1749). A solucao (usada pelo nice!view):
+ * desenhar num CANVAS em formato L8 e rotacionar o BUFFER do canvas com
+ * lv_draw_sw_rotate (L8 = menor formato suportado pelo sw_rotate; 1-bit falha).
  *
- * Baseado no status_screen.c embutido do ZMK (MIT).
+ * ESTA VERSAO E UM TESTE ESTATICO: so um texto rotacionado, pra validar a
+ * tecnica no hardware. Se funcionar, adiciono os widgets vivos (layer/bateria).
  */
 
-#include <zmk/display/widgets/output_status.h>
-#include <zmk/display/widgets/peripheral_status.h>
-#include <zmk/display/widgets/battery_status.h>
-#include <zmk/display/widgets/layer_status.h>
+#include <lvgl.h>
 #include <zmk/display/status_screen.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_BATTERY_STATUS)
-static struct zmk_widget_battery_status battery_status_widget;
-#endif
+#define DW 128 /* largura do display */
+#define DH 32  /* altura do display  */
+#define CF LV_COLOR_FORMAT_L8
+#define BPP LV_COLOR_FORMAT_GET_BPP(CF)
 
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_OUTPUT_STATUS)
-static struct zmk_widget_output_status output_status_widget;
-#endif
-
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_PERIPHERAL_STATUS)
-static struct zmk_widget_peripheral_status peripheral_status_widget;
-#endif
-
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_LAYER_STATUS)
-static struct zmk_widget_layer_status layer_status_widget;
-#endif
+/* canvas de DESENHO: retrato (DH de largura x DW de altura = 32 x 128) */
+static uint8_t draw_buf[LV_CANVAS_BUF_SIZE(DH, DW, BPP, LV_DRAW_BUF_STRIDE_ALIGN)];
+/* canvas de SAIDA: orientacao do display (128 x 32), recebe o buffer rotacionado */
+static uint8_t out_buf[LV_CANVAS_BUF_SIZE(DW, DH, BPP, LV_DRAW_BUF_STRIDE_ALIGN)];
 
 lv_obj_t *zmk_display_status_screen() {
-    /* Gira o display 90 graus -> retrato (LVGL 9). Precisa de LV_Z_FULL_REFRESH. */
-    lv_display_t *disp = lv_display_get_default();
-    if (disp != NULL) {
-        lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90);
-    }
-
     lv_obj_t *screen = lv_obj_create(NULL);
 
-    /* --- Widgets empilhados na vertical (topo -> base) --- */
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_OUTPUT_STATUS)
-    zmk_widget_output_status_init(&output_status_widget, screen);
-    lv_obj_align(zmk_widget_output_status_obj(&output_status_widget), LV_ALIGN_TOP_MID, 0, 2);
-#endif
+    /* canvas de saida (o que aparece na tela) */
+    lv_obj_t *out = lv_canvas_create(screen);
+    lv_canvas_set_buffer(out, out_buf, DW, DH, CF);
+    lv_obj_align(out, LV_ALIGN_TOP_LEFT, 0, 0);
 
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_BATTERY_STATUS)
-    zmk_widget_battery_status_init(&battery_status_widget, screen);
-    lv_obj_align(zmk_widget_battery_status_obj(&battery_status_widget), LV_ALIGN_TOP_MID, 0, 22);
-#endif
+    /* canvas de desenho, em retrato (32 x 128) — temporario */
+    lv_obj_t *draw = lv_canvas_create(screen);
+    lv_canvas_set_buffer(draw, draw_buf, DH, DW, CF);
+    lv_canvas_fill_bg(draw, lv_color_white(), LV_OPA_COVER);
 
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_PERIPHERAL_STATUS)
-    zmk_widget_peripheral_status_init(&peripheral_status_widget, screen);
-    lv_obj_align(zmk_widget_peripheral_status_obj(&peripheral_status_widget), LV_ALIGN_TOP_MID, 0,
-                 22);
-#endif
+    /* desenha um texto de teste no canvas retrato */
+    lv_draw_label_dsc_t label_dsc;
+    lv_draw_label_dsc_init(&label_dsc);
+    label_dsc.color = lv_color_black();
+    label_dsc.font = &lv_font_montserrat_16;
+    label_dsc.align = LV_TEXT_ALIGN_CENTER;
+    label_dsc.text = "ZMK\nOK";
 
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_LAYER_STATUS)
-    zmk_widget_layer_status_init(&layer_status_widget, screen);
-    lv_obj_set_style_text_font(zmk_widget_layer_status_obj(&layer_status_widget),
-                               lv_theme_get_font_small(screen), LV_PART_MAIN);
-    lv_obj_align(zmk_widget_layer_status_obj(&layer_status_widget), LV_ALIGN_BOTTOM_MID, 0, -2);
-#endif
+    lv_layer_t layer;
+    lv_canvas_init_layer(draw, &layer);
+    lv_area_t coords = {0, 8, DH, DW};
+    lv_draw_label(&layer, &label_dsc, &coords);
+    lv_canvas_finish_layer(draw, &layer);
+
+    /* rotaciona draw_buf (32x128) -> out_buf (128x32), 90 graus */
+    uint32_t src_stride = lv_draw_buf_width_to_stride(DH, CF);
+    uint32_t dst_stride = lv_draw_buf_width_to_stride(DW, CF);
+    lv_draw_sw_rotate(draw_buf, out_buf, DH, DW, src_stride, dst_stride,
+                      LV_DISPLAY_ROTATION_90, CF);
+
+    /* remove o canvas de desenho; so o de saida (rotacionado) fica visivel */
+    lv_obj_delete(draw);
+    lv_obj_invalidate(out);
 
     return screen;
 }
