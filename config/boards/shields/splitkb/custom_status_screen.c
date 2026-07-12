@@ -5,7 +5,8 @@
  * (nice!view): desenha num CANVAS L8 e rotaciona o BUFFER com lv_draw_sw_rotate.
  * Precisa de: LV_USE_CANVAS, work queue dedicada, mem pool grande (Kconfig.defconfig).
  *
- * Mostra: camada atual (topo) e bateria (base). Atualiza via eventos do ZMK.
+ * Central: mostra camada (topo) + bateria (base). Periferica: so bateria
+ * (layer/keymap sao exclusivos da central).
  */
 
 #include <stdio.h>
@@ -15,28 +16,36 @@
 #include <zmk/display.h>
 #include <zmk/display/status_screen.h>
 #include <zmk/event_manager.h>
-#include <zmk/events/layer_state_changed.h>
 #include <zmk/events/battery_state_changed.h>
-#include <zmk/keymap.h>
 #include <zmk/battery.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
+
+/* Camada/keymap so existem na central (ou em teclado nao-split). */
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+#define SHOW_LAYER 1
+#include <zmk/events/layer_state_changed.h>
+#include <zmk/keymap.h>
+#else
+#define SHOW_LAYER 0
+#endif
 
 #define DW 128 /* largura do display */
 #define DH 32  /* altura do display  */
 #define CF LV_COLOR_FORMAT_L8
 #define BPP LV_COLOR_FORMAT_GET_BPP(CF)
 
-/* canvas de DESENHO em retrato (32 x 128) e de SAIDA na orientacao do display (128 x 32) */
 static uint8_t draw_buf[LV_CANVAS_BUF_SIZE(DH, DW, BPP, LV_DRAW_BUF_STRIDE_ALIGN)];
 static uint8_t out_buf[LV_CANVAS_BUF_SIZE(DW, DH, BPP, LV_DRAW_BUF_STRIDE_ALIGN)];
 
 static lv_obj_t *g_draw; /* canvas retrato (oculto), onde desenhamos */
 static lv_obj_t *g_out;  /* canvas mostrado, recebe o buffer rotacionado */
 
-static uint8_t g_layer = 0;
 static uint8_t g_battery = 0;
+#if SHOW_LAYER
+static uint8_t g_layer = 0;
+#endif
 
 static void draw_text(lv_coord_t y, lv_coord_t h, const char *txt) {
     lv_draw_label_dsc_t dsc;
@@ -60,9 +69,10 @@ static void redraw(void) {
     lv_canvas_fill_bg(g_draw, lv_color_white(), LV_OPA_COVER);
 
     char buf[16];
+#if SHOW_LAYER
     snprintf(buf, sizeof(buf), "L%d", g_layer);
     draw_text(6, 24, buf);
-
+#endif
     snprintf(buf, sizeof(buf), "%d%%", g_battery);
     draw_text(DW - 30, 24, buf);
 
@@ -76,7 +86,8 @@ static void redraw(void) {
     }
 }
 
-/* ---------- listener de CAMADA ---------- */
+#if SHOW_LAYER
+/* ---------- listener de CAMADA (so central) ---------- */
 struct layer_state {
     uint8_t index;
 };
@@ -89,8 +100,9 @@ static void layer_update_cb(struct layer_state s) {
 }
 ZMK_DISPLAY_WIDGET_LISTENER(splitkb_layer, struct layer_state, layer_update_cb, layer_get_state)
 ZMK_SUBSCRIPTION(splitkb_layer, zmk_layer_state_changed);
+#endif /* SHOW_LAYER */
 
-/* ---------- listener de BATERIA ---------- */
+/* ---------- listener de BATERIA (central + periferica) ---------- */
 struct batt_state {
     uint8_t level;
 };
@@ -119,8 +131,9 @@ lv_obj_t *zmk_display_status_screen() {
 
     redraw();
 
-    /* dispara os listeners (chamam update_cb -> redraw com estado real) */
+#if SHOW_LAYER
     splitkb_layer_init();
+#endif
     splitkb_batt_init();
 
     return screen;
