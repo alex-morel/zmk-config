@@ -145,9 +145,14 @@ ZMK_SUBSCRIPTION(splitkb_batt, zmk_battery_state_changed);
 
 lv_obj_t *zmk_display_status_screen() {
     lv_obj_t *screen = lv_obj_create(NULL);
+    /* remove a margem/padding padrao do LVGL pra usar a tela inteira */
+    lv_obj_set_style_pad_all(screen, 0, LV_PART_MAIN);
+    lv_obj_set_style_border_width(screen, 0, LV_PART_MAIN);
 
     g_out = lv_canvas_create(screen);
     lv_canvas_set_buffer(g_out, out_buf, DW, DH, CF);
+    lv_obj_set_style_pad_all(g_out, 0, LV_PART_MAIN);
+    lv_obj_set_style_border_width(g_out, 0, LV_PART_MAIN);
     lv_obj_align(g_out, LV_ALIGN_TOP_LEFT, 0, 0);
 
     g_draw = lv_canvas_create(screen);
