@@ -1,7 +1,7 @@
 if SHIELD_SPLITKB_LEFT
 
 config ZMK_KEYBOARD_NAME
-    default "Big Zero"
+    default "The Big Zero"
 
 # Lado esquerdo = central (conecta no PC / host)
 config ZMK_SPLIT_ROLE_CENTRAL
