@@ -26,7 +26,8 @@
 / {
     chosen {
         zmk,kscan = &kscan0;
-        zmk,matrix-transform = &default_transform;
+        /* ZMK Studio exige physical-layout e NAO aceita zmk,matrix-transform */
+        zmk,physical-layout = &default_layout;
         zephyr,display = &oled;
     };
 
@@ -130,3 +131,7 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
         prechargep = <0x22>;
     };
 };
+
+/* Physical layout (posicoes fisicas das teclas) — pro ZMK Studio.
+ * Incluido no fim porque referencia &default_transform e &kscan0. */
+#include "splitkb-layouts.dtsi"

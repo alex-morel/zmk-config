@@ -8,6 +8,7 @@ features:
   - keys
   - display
   - pointer
+  - studio
 siblings:
   - splitkb_left
   - splitkb_right

@@ -5,8 +5,11 @@ include:
   # Teste isolado do joystick (validado)
   - board: nice_nano//zmk
     shield: jstest
-  # Teclado split real — dois lados
+  # Teclado split real — dois lados.
+  # O lado esquerdo (central) leva o ZMK Studio (conecta por USB).
   - board: nice_nano//zmk
     shield: splitkb_left
+    snippet: studio-rpc-usb-uart
+    cmake-args: -DCONFIG_ZMK_STUDIO=y
   - board: nice_nano//zmk
     shield: splitkb_right
