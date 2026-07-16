@@ -10,6 +10,13 @@
  *
  * Layer 1 (SCROLL): mantida com &mo 1 num polegar. Nessa layer o joystick
  * DIREITO vira scroll automaticamente (config no input-listener do .dtsi).
+ *
+ * &bootloader (layer 1, cantos inferiores externos): poe a placa em modo UF2
+ * pra atualizar o firmware sem precisar do reset duplo -- o board nao tem
+ * botoes. Tem UM EM CADA LADO de proposito: a behavior de reset e
+ * BEHAVIOR_LOCALITY_EVENT_SOURCE, ou seja, roda na metade onde a tecla foi
+ * apertada, e nao na central. Canto esquerdo = flasheia o esquerdo; canto
+ * direito = flasheia o direito. Cabo USB tem que estar no lado alvo.
  */
 
 / {
@@ -31,7 +38,7 @@
             bindings = <
    &studio_unlock &trans &trans &trans &trans &trans     &trans &trans   &kp UP   &trans    &trans &trans
    &trans &trans &trans &trans &trans &trans     &trans &kp LEFT &kp DOWN &kp RIGHT &trans &trans
-   &trans &trans &trans &trans &trans &trans     &trans &trans   &trans   &trans    &trans &trans
+   &bootloader &trans &trans &trans &trans &trans     &trans &trans   &trans   &trans    &trans &bootloader
                         &trans &trans &trans      &trans &trans          &trans &trans &trans &trans &trans
             >;
         };
