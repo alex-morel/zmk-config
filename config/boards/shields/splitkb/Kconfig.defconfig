@@ -114,9 +114,11 @@ endchoice
 config LV_FONT_MONTSERRAT_48
     default y
 
-# LV_OBJ_LABEL (widget de label) e ligado no splitkb.conf, nao aqui: setar
-# num Kconfig.defconfig dava "defined without a type" (ordem de parse — o
-# simbolo so ganha tipo depois, no Kconfig do LVGL).
+# Widget de label: o jeito certo (padrao do prospector) e amarrar o
+# select na propria escolha da tela custom. LV_USE_LABEL e o simbolo real
+# do LVGL (LV_OBJ_LABEL era wrapper interno do ZMK, nao settavel de fora).
+config ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
+    select LV_USE_LABEL
 
 # Buffer maior que a OLED: 240x240 @ 16bpp.
 choice ZMK_DISPLAY_WORK_QUEUE
