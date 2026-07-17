@@ -151,6 +151,12 @@ choice LV_COLOR_DEPTH
     default LV_COLOR_DEPTH_16
 endchoice
 
+# Byte-swap do RGB565 (padrao do prospector). O nRF e little-endian, entao
+# o vermelho 0xF800 saia como 0x00F8 = AZUL pro painel (foi o que apareceu
+# no teste). Com o swap sai 0xF800 = vermelho certo.
+config LV_COLOR_16_SWAP
+    default y
+
 endif # LVGL
 
 endif # dongle
