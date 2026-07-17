@@ -1,15 +1,20 @@
 # Matriz de builds do GitHub Actions.
-# Board nice!nano v2 (compatível com o ProMicro nRF52840 clone) + shield jstest.
+# Board nice!nano v2 (compativel com o ProMicro nRF52840 clone).
 # ZMK migrou pro Zephyr 4.1: o board virou "nice_nano//zmk" (era nice_nano_v2).
 include:
   # Teste isolado do joystick (validado)
   - board: nice_nano//zmk
     shield: jstest
-  # Teclado split real — dois lados.
-  # O lado esquerdo (central) leva o ZMK Studio (conecta por USB).
+
+  # --- Teclado split com DONGLE ---
+  # O DONGLE e o central: roda o keymap, conecta no PC por USB, leva o Studio.
   - board: nice_nano//zmk
-    shield: splitkb_left
+    shield: splitkb_dongle
     snippet: studio-rpc-usb-uart
     cmake-args: -DCONFIG_ZMK_STUDIO=y
+
+  # As duas metades sao perifericas (sem Studio, sem USB pro host).
+  - board: nice_nano//zmk
+    shield: splitkb_left
   - board: nice_nano//zmk
     shield: splitkb_right

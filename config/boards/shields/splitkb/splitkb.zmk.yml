@@ -12,3 +12,4 @@ features:
 siblings:
   - splitkb_left
   - splitkb_right
+  - splitkb_dongle

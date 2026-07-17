@@ -1,6 +1,13 @@
 #include "splitkb.dtsi"
 
-/* Colunas do lado ESQUERDO (C0..C5 = mindinho -> índice) */
+/*
+ * Lado ESQUERDO — agora PERIFERICO (com o dongle, quem e central e o dongle).
+ * Antes este lado era o central; por isso o joystick esquerdo era cursor local.
+ * Agora ele alimenta o input-split (reg=1) igual o direito faz, e o listener
+ * que vira isso em mouse mora no dongle.
+ */
+
+/* Colunas do lado ESQUERDO (C0..C5 = mindinho -> indice) */
 &kscan0 {
     col-gpios
         = <&pro_micro 8  GPIO_ACTIVE_HIGH>
@@ -13,7 +20,7 @@
 };
 
 / {
-    /* Joystick ESQUERDO (central) = CURSOR de mouse, local. */
+    /* Joystick ESQUERDO (periferico). Alimenta o input-split reg=1 -> dongle. */
     anin_left: analog_input_left {
         compatible = "zmk,analog-input";
         sampling-hz = <100>;
@@ -40,14 +47,10 @@
             input-code = <INPUT_REL_X>;
         };
     };
-
-    jsl_listener: jsl_listener {
-        compatible = "zmk,input-listener";
-        device = <&anin_left>;
-    };
 };
 
-/* O central (este lado) escuta o joystick da periférica que chega pela split. */
-&jsr_listener {
+/* Conecta o joystick esquerdo ao input-split reg=1 (lado periferico). */
+&jsl_split {
     status = "okay";
+    device = <&anin_left>;
 };

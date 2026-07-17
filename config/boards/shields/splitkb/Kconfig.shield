@@ -3,3 +3,6 @@ config SHIELD_SPLITKB_LEFT
 
 config SHIELD_SPLITKB_RIGHT
     def_bool $(shields_list_contains,splitkb_right)
+
+config SHIELD_SPLITKB_DONGLE
+    def_bool $(shields_list_contains,splitkb_dongle)

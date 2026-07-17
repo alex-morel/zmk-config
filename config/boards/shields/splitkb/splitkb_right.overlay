@@ -51,7 +51,9 @@
     };
 };
 
-/* Conecta o joystick direito ao input-split (lado periférica). */
+/* Conecta o joystick direito ao input-split reg=0 (lado periferico).
+ * O no nasce disabled no common; aqui habilitamos e ligamos o device. */
 &jsr_split {
+    status = "okay";
     device = <&anin_right>;
 };

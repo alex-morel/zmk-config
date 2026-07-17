@@ -1,0 +1,79 @@
+#include <zephyr/dt-bindings/mipi_dbi/mipi_dbi.h>   // MIPI_DBI_MODE_SPI_4WIRE
+#include <zephyr/dt-bindings/display/panel.h>        // PANEL_PIXEL_FORMAT_RGB_565
+#include "splitkb-common.dtsi"   // transform, splits, listeners, physical-layout
+
+/*
+ * DONGLE — o central da arquitetura com dongle. Nao tem teclas, nem joystick,
+ * nem OLED: so recebe as duas metades por BLE, roda o keymap e fala com o PC
+ * por USB. Tela redonda GC9A01 (240x240) via SPI/MIPI-DBI.
+ *
+ * >>> PINAGEM DA TELA — CONFIRA/AJUSTE QUANDO FOR FIAR <<<
+ * O dongle tem quase todos os pinos livres. Usei o SPI do pro_micro
+ * (&pro_micro_spi: SCK/MOSI/MISO nos pinos padrao) + 3 GPIOs de controle:
+ *   SCK  -> pro_micro SCLK  (SPI, pinctrl)     MOSI -> pro_micro MOSI (SPI)
+ *   CS   -> pro_micro 10                        DC   -> pro_micro 9
+ *   RST  -> pro_micro 8                         BLK  -> ligar em VCC (ou GPIO)
+ * GC9A01 nao usa MISO (write-only). BLK (backlight) pode ir direto no 3V3;
+ * se quiser controlar por firmware, ligue num GPIO e me avise.
+ *
+ * >>> BOTAO DE RESET (recomendado) <<<
+ * O dongle NAO consegue entrar em bootloader pelo keymap (a tecla poe em
+ * bootloader a METADE onde foi apertada, nunca o dongle). Ligue um botao
+ * tatil entre RST e GND: duplo-toque = bootloader pra regravar.
+ */
+
+/ {
+    chosen {
+        zephyr,display = &gc9a01;
+    };
+
+    /* Sem teclas: kscan mock (o keymap/Studio exige um kscan escolhido). */
+    kscan0: kscan {
+        compatible = "zmk,kscan-mock";
+        columns = <0>;
+        rows = <0>;
+        events = <0>;
+    };
+};
+
+/* Barramento SPI do pro_micro. O CS do display fica aqui (cs-gpios); o filho
+ * gc9a01@0 (reg=0) usa o 1o cs-gpios. */
+&pro_micro_spi {
+    status = "okay";
+    cs-gpios = <&pro_micro 10 GPIO_ACTIVE_LOW>;    /* CS da tela */
+};
+
+/ {
+    /* Controlador MIPI-DBI (modo SPI 4 fios): usa o barramento acima + DC/RST.
+     * Fica top-level e aponta pro barramento via spi-dev (padrao do binding). */
+    mipi_dbi: mipi-dbi {
+        compatible = "zephyr,mipi-dbi-spi";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        spi-dev = <&pro_micro_spi>;
+        dc-gpios = <&pro_micro 9 GPIO_ACTIVE_HIGH>;
+        reset-gpios = <&pro_micro 8 GPIO_ACTIVE_LOW>;
+        write-only;                 /* GC9A01 nao le -> dispensa MISO */
+
+        gc9a01: gc9a01@0 {
+            compatible = "galaxycore,gc9x01x";
+            reg = <0>;
+            mipi-max-frequency = <DT_FREQ_M(40)>;
+            mipi-mode = <MIPI_DBI_MODE_SPI_4WIRE>;
+            pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
+            width = <240>;
+            height = <240>;
+            display-inversion;      /* GC9A01 tipico: cores invertidas sem isso */
+        };
+    };
+};
+
+/*
+ * Central: escuta os DOIS joysticks (cada um chega pela split no seu reg).
+ * Sem device aqui (modo proxy/central); o device fica em cada periferico.
+ */
+&jsr_split { status = "okay"; };    /* joystick direito (reg=0) */
+&jsl_split { status = "okay"; };    /* joystick esquerdo (reg=1) */
+
+&jsr_listener { status = "okay"; };  /* direito: cursor, scroll na layer 1 */
+&jsl_listener { status = "okay"; };  /* esquerdo: cursor */
