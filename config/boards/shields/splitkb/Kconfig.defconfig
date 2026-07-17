@@ -114,10 +114,9 @@ endchoice
 config LV_FONT_MONTSERRAT_48
     default y
 
-# Widget de label (a tela built-in seleciona sozinha via LV_OBJ_LABEL; como
-# trocamos pra custom, habilitamos na mao — senao lv_label_create nao linka).
-config LV_OBJ_LABEL
-    default y
+# LV_OBJ_LABEL (widget de label) e ligado no splitkb.conf, nao aqui: setar
+# num Kconfig.defconfig dava "defined without a type" (ordem de parse — o
+# simbolo so ganha tipo depois, no Kconfig do LVGL).
 
 # Buffer maior que a OLED: 240x240 @ 16bpp.
 choice ZMK_DISPLAY_WORK_QUEUE
