@@ -103,23 +103,15 @@ config MIPI_DBI
 config GC9X01X
     default y
 
-# Comeca com a tela de status PADRAO do ZMK (a custom da metade e mono/128x32,
-# nao serve pra 240x240 color). Uma tela redonda dedicada e um passo futuro.
+# DIAGNOSTICO: tela custom que pinta vermelho + "A" branco no centro, com
+# cores explicitas (dongle_status_screen.c). Isola o pipeline display+LVGL do
+# tema/widgets. Depois que confirmar que aparece, volta pra BUILT_IN.
 choice ZMK_DISPLAY_STATUS_SCREEN
-    default ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN
+    default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
 endchoice
 
-# TEMA: o ZMK so liga o tema mono automaticamente em display de 1 bit
-# (`imply LV_USE_THEME_MONO if LV_Z_BITS_PER_PIXEL=1`). No color (16bpp) NAO
-# liga tema nenhum -> o texto padrao do LVGL sai PRETO sobre fundo preto =
-# invisivel (por isso a tela ficava so preta). Ligamos o tema mono na mao;
-# ele renderiza em 2 cores, que e como os widgets built-in foram desenhados.
-config LV_USE_THEME_MONO
-    default y
-
-# Com o tema mono, escolhe fundo PRETO + texto BRANCO (combina com a tela
-# redonda). Se sair invertido (fundo branco), troque pra n.
-config ZMK_DISPLAY_INVERT
+# Fonte grande pro "A" do diagnostico.
+config LV_FONT_MONTSERRAT_48
     default y
 
 # Buffer maior que a OLED: 240x240 @ 16bpp.
