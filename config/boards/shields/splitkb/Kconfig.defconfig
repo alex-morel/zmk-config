@@ -125,6 +125,10 @@ choice LV_FONT_DEFAULT
     default LV_FONT_DEFAULT_MONTSERRAT_16
 endchoice
 
+# 28 = "YE NOT GUILTY" da animacao (cabe na tela); 48 = camada / scroll.
+config LV_FONT_MONTSERRAT_28
+    default y
+
 config LV_FONT_MONTSERRAT_48
     default y
 
