@@ -1,4 +1,3 @@
-#include <zephyr/dt-bindings/mipi_dbi/mipi_dbi.h>   // MIPI_DBI_MODE_SPI_4WIRE
 #include <zephyr/dt-bindings/display/panel.h>        // PANEL_PIXEL_FORMAT_RGB_565
 #include "splitkb-common.dtsi"   // transform, splits, listeners, physical-layout
 
@@ -59,7 +58,7 @@
             compatible = "galaxycore,gc9x01x";
             reg = <0>;
             mipi-max-frequency = <DT_FREQ_M(40)>;
-            mipi-mode = <MIPI_DBI_MODE_SPI_4WIRE>;
+            /* modo SPI 4 fios (Type C3) e o default do mipi-dbi-spi */
             pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
             width = <240>;
             height = <240>;
