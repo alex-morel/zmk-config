@@ -166,6 +166,15 @@ choice LV_COLOR_DEPTH
     default LV_COLOR_DEPTH_16
 endchoice
 
+# TEMPORARIO (diagnostico das listras): liga o log do LVGL pra ver falta de
+# memoria / erro de render no boot. Sai pela serial junto com o log do ZMK.
+config LV_USE_LOG
+    default y
+
+choice LV_LOG_LEVEL
+    default LV_LOG_LEVEL_WARN
+endchoice
+
 # Byte-swap do RGB565 (padrao do prospector). O nRF e little-endian, entao
 # o vermelho 0xF800 saia como 0x00F8 = AZUL pro painel (foi o que apareceu
 # no teste). Com o swap sai 0xF800 = vermelho certo.

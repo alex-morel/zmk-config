@@ -8,10 +8,11 @@ include:
 
   # --- Teclado split com DONGLE ---
   # O DONGLE e o central: roda o keymap, conecta no PC por USB, leva o Studio.
+  # >>> TEMPORARIO: modo LOG USB pra diagnosticar as listras na tela. <<<
+  # Depois volta pra snippet studio-rpc-usb-uart + cmake studio.
   - board: nice_nano//zmk
     shield: splitkb_dongle
-    snippet: studio-rpc-usb-uart
-    cmake-args: -DCONFIG_ZMK_STUDIO=y
+    snippet: zmk-usb-logging
 
   # As duas metades sao perifericas (sem Studio, sem USB pro host).
   - board: nice_nano//zmk
