@@ -1,15 +1,15 @@
 /*
  * Tela de status do dongle (GC9A01 240x240 color) + ANIMACAO DE BOOT.
  *
- * A tela de status (layer + conexao) e montada com CORES EXPLICITAS (fundo
- * preto, texto branco) — no color, sem tema, o texto padrao sai preto sobre
- * preto e some (bug que investigamos). Por cima dela nasce um OVERLAY preto
- * com o logo Ø que anima no boot e some (fade-out), revelando a tela.
+ * Boot (ref. Gungrave):
+ *   1) o texto "CAST IN THE NAME OF GOD   YE NOT GUILTY" desliza da direita
+ *      pra esquerda, ocupando a tela (fonte grande);
+ *   2) "YE NOT GUILTY" pisca 4 vezes no centro;
+ *   3) o overlay preto some (fade) e revela a tela de status (layer + conexao).
  *
- * Como a zmk_display_status_screen() roda UMA vez no boot e o LVGL tica pela
- * work queue do display, a animacao toca sozinha toda vez que o dongle liga.
- * O overlay nao e deletado: fica em opacidade 0 (invisivel; a tela nao tem
- * toque, entao nao atrapalha).
+ * A tela de status usa CORES EXPLICITAS (fundo preto, texto branco): no color,
+ * sem tema, o texto padrao sai preto sobre preto e some (bug que investigamos).
+ * O overlay nao e deletado no fim: fica em opacidade 0 (a tela nao tem toque).
  */
 
 #include <zephyr/kernel.h>
@@ -20,18 +20,26 @@
 #include <zmk/display/widgets/layer_status.h>
 #include <zmk/display/widgets/output_status.h>
 
-LV_FONT_DECLARE(bigzero);   // fonte custom com o glifo Ø (0xD8), tamanho 56
-
 static struct zmk_widget_layer_status layer_status_widget;
 static struct zmk_widget_output_status output_status_widget;
 
-/* wrappers: o exec_cb da anim e (void*, int32_t); os setters de estilo pedem
- * um 3o argumento (selector). */
+/* --- tempos da animacao (ms) --- */
+#define SCROLL_MS 4000        /* deslize do texto */
+#define BLINK_STATES 8        /* 8 estados = 4 piscadas (on/off x4) */
+#define BLINK_MS 1600         /* 200ms por estado */
+#define FADE_MS 500           /* fade-out do overlay */
+
+/* exec_cb da anim e (void*, int32_t); os setters de estilo querem selector. */
 static void anim_set_opa(void *var, int32_t v) {
     lv_obj_set_style_opa((lv_obj_t *)var, (lv_opa_t)v, LV_PART_MAIN);
 }
-static void anim_set_translate_y(void *var, int32_t v) {
-    lv_obj_set_style_translate_y((lv_obj_t *)var, v, LV_PART_MAIN);
+static void anim_set_x(void *var, int32_t v) {
+    lv_obj_set_x((lv_obj_t *)var, v);
+}
+/* pisca: estado par = visivel, impar = invisivel */
+static void anim_blink(void *var, int32_t v) {
+    lv_obj_set_style_opa((lv_obj_t *)var, (v % 2 == 0) ? LV_OPA_COVER : LV_OPA_TRANSP,
+                         LV_PART_MAIN);
 }
 
 static void boot_animation(lv_obj_t *screen) {
@@ -42,42 +50,47 @@ static void boot_animation(lv_obj_t *screen) {
     lv_obj_set_style_bg_color(overlay, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(overlay, LV_OPA_COVER, LV_PART_MAIN);
 
-    /* logo Ø no centro, comeca invisivel e 40px abaixo */
-    lv_obj_t *logo = lv_label_create(overlay);
-    lv_label_set_text(logo, "\xC3\x98");   /* Ø em UTF-8 */
-    lv_obj_set_style_text_color(logo, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_text_font(logo, &bigzero, LV_PART_MAIN);
-    lv_obj_center(logo);
-    lv_obj_set_style_opa(logo, LV_OPA_TRANSP, LV_PART_MAIN);
-
     lv_anim_t a;
 
-    /* 1) logo sobe deslizando (translate_y 40 -> 0) */
+    /* 1) TEXTO DESLIZANDO da direita pra esquerda */
+    lv_obj_t *scroll = lv_label_create(overlay);
+    lv_label_set_text(scroll, "CAST IN THE NAME OF GOD   YE NOT GUILTY");
+    lv_obj_set_style_text_color(scroll, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(scroll, &lv_font_montserrat_48, LV_PART_MAIN);
+    lv_obj_update_layout(scroll);                    /* pra get_width/height valerem */
+    int32_t tw = lv_obj_get_width(scroll);
+    lv_obj_set_y(scroll, (240 - lv_obj_get_height(scroll)) / 2);   /* centralizado vertical */
+
     lv_anim_init(&a);
-    lv_anim_set_var(&a, logo);
-    lv_anim_set_values(&a, 40, 0);
-    lv_anim_set_time(&a, 700);
-    lv_anim_set_delay(&a, 150);
-    lv_anim_set_exec_cb(&a, anim_set_translate_y);
-    lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
+    lv_anim_set_var(&a, scroll);
+    lv_anim_set_values(&a, 240, -tw);                /* entra pela direita, sai pela esquerda */
+    lv_anim_set_time(&a, SCROLL_MS);
+    lv_anim_set_exec_cb(&a, anim_set_x);
+    lv_anim_set_path_cb(&a, lv_anim_path_linear);    /* velocidade constante (marquee) */
     lv_anim_start(&a);
 
-    /* 2) logo aparece (opacidade 0 -> 255), junto com o slide */
+    /* 2) "YE NOT GUILTY" pisca 4x no centro (comeca escondido) */
+    lv_obj_t *blink = lv_label_create(overlay);
+    lv_label_set_text(blink, "YE NOT GUILTY");
+    lv_obj_set_style_text_color(blink, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(blink, &lv_font_montserrat_48, LV_PART_MAIN);
+    lv_obj_center(blink);
+    lv_obj_set_style_opa(blink, LV_OPA_TRANSP, LV_PART_MAIN);
+
     lv_anim_init(&a);
-    lv_anim_set_var(&a, logo);
-    lv_anim_set_values(&a, LV_OPA_TRANSP, LV_OPA_COVER);
-    lv_anim_set_time(&a, 700);
-    lv_anim_set_delay(&a, 150);
-    lv_anim_set_exec_cb(&a, anim_set_opa);
-    lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
+    lv_anim_set_var(&a, blink);
+    lv_anim_set_values(&a, 0, BLINK_STATES);
+    lv_anim_set_time(&a, BLINK_MS);
+    lv_anim_set_delay(&a, SCROLL_MS);                /* comeca quando o scroll termina */
+    lv_anim_set_exec_cb(&a, anim_blink);
     lv_anim_start(&a);
 
-    /* 3) depois de segurar, o overlay inteiro some (255 -> 0) e revela a tela */
+    /* 3) overlay some e revela a tela de status */
     lv_anim_init(&a);
     lv_anim_set_var(&a, overlay);
     lv_anim_set_values(&a, LV_OPA_COVER, LV_OPA_TRANSP);
-    lv_anim_set_time(&a, 600);
-    lv_anim_set_delay(&a, 1500);
+    lv_anim_set_time(&a, FADE_MS);
+    lv_anim_set_delay(&a, SCROLL_MS + BLINK_MS);     /* depois do scroll + piscadas */
     lv_anim_set_exec_cb(&a, anim_set_opa);
     lv_anim_set_path_cb(&a, lv_anim_path_ease_in);
     lv_anim_start(&a);
