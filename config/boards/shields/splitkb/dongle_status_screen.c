@@ -49,6 +49,10 @@ static void boot_animation(lv_obj_t *screen) {
     lv_obj_set_size(overlay, 240, 240);
     lv_obj_set_style_bg_color(overlay, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(overlay, LV_OPA_COVER, LV_PART_MAIN);
+    /* o texto que desliza e MUITO mais largo que a tela; sem isto o LVGL
+     * torna o overlay rolavel e desenha barras de rolagem (as listras). */
+    lv_obj_set_scrollbar_mode(overlay, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_remove_flag(overlay, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_anim_t a;
 
@@ -103,6 +107,9 @@ lv_obj_t *zmk_display_status_screen() {
     lv_obj_set_style_bg_color(screen, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_text_color(screen, lv_color_white(), LV_PART_MAIN);
+    /* sem rolagem/barras na tela toda */
+    lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 
     /* conexao (USB/BLE) no topo */
     zmk_widget_output_status_init(&output_status_widget, screen);
