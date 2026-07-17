@@ -149,11 +149,12 @@ endif # ZMK_DISPLAY
 
 if LVGL
 
-# LV_Z_VDB_SIZE e PORCENTAGEM da tela (range 1..100), nao bytes. Numa
-# 240x240x16bpp, 100% seriam ~115KB e estouram a RAM do nRF52840; 10% (~11.5KB)
-# e o suficiente pro LVGL renderizar em partes.
+# LV_Z_VDB_SIZE e PORCENTAGEM da tela (1..100). Com 10% o LVGL renderiza em
+# muitos pedacos e a tela complexa (widgets+overlay) saia com artefato de
+# flush parcial (listras verticais). O prospector roda tela redonda color
+# num nRF52840 igual com 100 -> buffer da tela toda. Cabe.
 config LV_Z_VDB_SIZE
-    default 10
+    default 100
 
 config LV_DPI_DEF
     default 130
