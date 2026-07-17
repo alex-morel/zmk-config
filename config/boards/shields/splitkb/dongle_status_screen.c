@@ -1,7 +1,7 @@
 /*
  * Tela de status do dongle (GC9A01 240x240 color) + ANIMACAO DE BOOT.
  *
- * Boot (ref. Gungrave):
+ * Boot:
  *   1) o texto "CAST IN THE NAME OF GOD   YE NOT GUILTY" desliza da direita
  *      pra esquerda, ocupando a tela (fonte grande);
  *   2) "YE NOT GUILTY" pisca 4 vezes no centro;
