@@ -8,6 +8,12 @@ config ZMK_KEYBOARD_NAME
 
 config ZMK_SPLIT_ROLE_CENTRAL
     default y
+    # Widgets da tela custom do dongle. Pendurados aqui (no central) de
+    # proposito: os widgets tem `depends on ZMK_SPLIT_ROLE_CENTRAL`, entao so
+    # o dongle os liga; as metades (perifericas) nem os compilam. select em
+    # vez de "config ... default y" pra evitar erro de ordem de parse.
+    select ZMK_WIDGET_LAYER_STATUS
+    select ZMK_WIDGET_OUTPUT_STATUS
 
 # Duas metades conectam no dongle (antes: 1 periferico no central).
 config ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS
@@ -110,7 +116,15 @@ choice ZMK_DISPLAY_STATUS_SCREEN
     default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
 endchoice
 
-# Fonte grande pro "A" do diagnostico.
+# Fontes: 16 = default (widget de conexao usa a fonte padrao do LVGL);
+# 48 = camada grande no centro.
+config LV_FONT_MONTSERRAT_16
+    default y
+
+choice LV_FONT_DEFAULT
+    default LV_FONT_DEFAULT_MONTSERRAT_16
+endchoice
+
 config LV_FONT_MONTSERRAT_48
     default y
 
