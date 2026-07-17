@@ -109,6 +109,19 @@ choice ZMK_DISPLAY_STATUS_SCREEN
     default ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN
 endchoice
 
+# TEMA: o ZMK so liga o tema mono automaticamente em display de 1 bit
+# (`imply LV_USE_THEME_MONO if LV_Z_BITS_PER_PIXEL=1`). No color (16bpp) NAO
+# liga tema nenhum -> o texto padrao do LVGL sai PRETO sobre fundo preto =
+# invisivel (por isso a tela ficava so preta). Ligamos o tema mono na mao;
+# ele renderiza em 2 cores, que e como os widgets built-in foram desenhados.
+config LV_USE_THEME_MONO
+    default y
+
+# Com o tema mono, escolhe fundo PRETO + texto BRANCO (combina com a tela
+# redonda). Se sair invertido (fundo branco), troque pra n.
+config ZMK_DISPLAY_INVERT
+    default y
+
 # Buffer maior que a OLED: 240x240 @ 16bpp.
 choice ZMK_DISPLAY_WORK_QUEUE
     default ZMK_DISPLAY_WORK_QUEUE_DEDICATED
