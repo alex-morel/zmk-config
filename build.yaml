@@ -8,11 +8,10 @@ include:
 
   # --- Teclado split com DONGLE ---
   # O DONGLE e o central: roda o keymap, conecta no PC por USB, leva o Studio.
-  # >>> TEMPORARIO: modo LOG USB pra capturar o motivo da desconexao das
-  # metades ("Disconnected: <addr> (reason N)"). Depois volta pro studio. <<<
   - board: nice_nano//zmk
     shield: splitkb_dongle
-    snippet: zmk-usb-logging
+    snippet: studio-rpc-usb-uart
+    cmake-args: -DCONFIG_ZMK_STUDIO=y
 
   # As duas metades sao perifericas (sem Studio, sem USB pro host).
   - board: nice_nano//zmk
