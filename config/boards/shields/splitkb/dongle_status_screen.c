@@ -24,9 +24,108 @@
 #include <zmk/display/status_screen.h>
 #include <zmk/display/widgets/layer_status.h>
 #include <zmk/display/widgets/output_status.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/battery_state_changed.h>
 
 static struct zmk_widget_layer_status layer_status_widget;
 static struct zmk_widget_output_status output_status_widget;
+
+/* ---------- bateria das METADES (perifericos) ----------
+ * O central recebe zmk_peripheral_battery_state_changed com .source = indice
+ * do slot do periferico.
+ *
+ * CUIDADO (motivo do g_seen): no ZMK o array de niveis nasce zerado, entao um
+ * periferico que NUNCA conectou le 0 -- igualzinho a "bateria vazia". Por isso
+ * so mostramos numero de quem ja mandou dado; o resto fica "--". Assim a
+ * metade direita (ainda nao montada) aparece como ausente, nao como 0%.
+ *
+ * OBS: .source e o indice do SLOT, atribuido por ordem de conexao -- nao e
+ * fixo "esquerda/direita". Por isso as duas nao levam rotulo L/R. */
+#define PERIPH_N 2
+#define BATT_W 44        /* largura do corpo do icone */
+#define BATT_H 20
+#define BATT_INNER 36    /* largura util do preenchimento */
+
+static lv_obj_t *g_batt_fill[PERIPH_N];
+static lv_obj_t *g_batt_lbl[PERIPH_N];
+static uint8_t g_batt_level[PERIPH_N];
+static bool g_batt_seen[PERIPH_N];
+
+static void batt_refresh(int i) {
+    if (g_batt_fill[i] == NULL || g_batt_lbl[i] == NULL) {
+        return;
+    }
+    if (g_batt_seen[i]) {
+        uint8_t pct = g_batt_level[i] > 100 ? 100 : g_batt_level[i];
+        int w = (BATT_INNER * pct) / 100;
+        lv_obj_set_width(g_batt_fill[i], w > 1 ? w : 1);
+        lv_obj_set_style_opa(g_batt_fill[i], LV_OPA_COVER, LV_PART_MAIN);
+        lv_label_set_text_fmt(g_batt_lbl[i], "%d", pct);
+    } else {
+        /* nunca conectou: icone vazio + "--" (nao mostrar 0, seria enganoso) */
+        lv_obj_set_style_opa(g_batt_fill[i], LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_label_set_text(g_batt_lbl[i], "--");
+    }
+}
+
+/* monta um icone de bateria (contorno + preenchimento + polo) e o numero */
+static void batt_create(lv_obj_t *parent, int i, lv_coord_t x_ofs) {
+    lv_obj_t *box = lv_obj_create(parent);
+    lv_obj_remove_style_all(box);
+    lv_obj_set_size(box, BATT_W, BATT_H);
+    lv_obj_set_style_border_color(box, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(box, 2, LV_PART_MAIN);
+    lv_obj_set_style_border_opa(box, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_radius(box, 3, LV_PART_MAIN);
+    lv_obj_align(box, LV_ALIGN_BOTTOM_MID, x_ofs, -48);
+
+    g_batt_fill[i] = lv_obj_create(box);
+    lv_obj_remove_style_all(g_batt_fill[i]);
+    lv_obj_set_size(g_batt_fill[i], 1, BATT_H - 8);
+    lv_obj_set_style_bg_color(g_batt_fill[i], lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(g_batt_fill[i], LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_align(g_batt_fill[i], LV_ALIGN_LEFT_MID, 2, 0);
+
+    /* polo positivo, colado na direita do corpo */
+    lv_obj_t *nub = lv_obj_create(parent);
+    lv_obj_remove_style_all(nub);
+    lv_obj_set_size(nub, 4, 8);
+    lv_obj_set_style_bg_color(nub, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(nub, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_align(nub, LV_ALIGN_BOTTOM_MID, x_ofs + BATT_W / 2 + 2, -54);
+
+    g_batt_lbl[i] = lv_label_create(parent);
+    lv_obj_set_style_text_color(g_batt_lbl[i], lv_color_white(), LV_PART_MAIN);
+    lv_obj_align(g_batt_lbl[i], LV_ALIGN_BOTTOM_MID, x_ofs, -22);
+
+    batt_refresh(i);
+}
+
+/* Usa o listener de DISPLAY do ZMK: ele marshala pra work queue do display,
+ * que e o jeito seguro de mexer no LVGL a partir de um evento. */
+struct periph_batt_state {
+    uint8_t source;
+    uint8_t level;
+};
+static struct periph_batt_state periph_batt_get_state(const zmk_event_t *eh) {
+    const struct zmk_peripheral_battery_state_changed *ev =
+        as_zmk_peripheral_battery_state_changed(eh);
+    if (ev == NULL) {
+        return (struct periph_batt_state){.source = 0xFF, .level = 0}; /* chamada inicial */
+    }
+    return (struct periph_batt_state){.source = ev->source, .level = ev->state_of_charge};
+}
+static void periph_batt_update_cb(struct periph_batt_state s) {
+    if (s.source >= PERIPH_N) {
+        return; /* ignora a chamada inicial e qualquer slot fora do esperado */
+    }
+    g_batt_level[s.source] = s.level;
+    g_batt_seen[s.source] = true;
+    batt_refresh(s.source);
+}
+ZMK_DISPLAY_WIDGET_LISTENER(dongle_periph_batt, struct periph_batt_state, periph_batt_update_cb,
+                            periph_batt_get_state)
+ZMK_SUBSCRIPTION(dongle_periph_batt, zmk_peripheral_battery_state_changed);
 
 /* Tempos medidos do GIF do anime (big-o-cast-in-the-name-of-god.gif):
  *   deslize da frase ~3.0s ; "YE NOT GUILTY" PULSA (escurece e clareia
@@ -147,6 +246,11 @@ lv_obj_t *zmk_display_status_screen() {
     lv_obj_set_style_text_color(zmk_widget_layer_status_obj(&layer_status_widget),
                                 lv_color_white(), LV_PART_MAIN);
     lv_obj_align(zmk_widget_layer_status_obj(&layer_status_widget), LV_ALIGN_CENTER, 0, 0);
+
+    /* bateria das duas metades, lado a lado na parte de baixo */
+    batt_create(screen, 0, -38);
+    batt_create(screen, 1, 38);
+    dongle_periph_batt_init();
 
     boot_animation(screen);
 
