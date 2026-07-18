@@ -27,6 +27,16 @@
 #include <zmk/event_manager.h>
 #include <zmk/events/battery_state_changed.h>
 
+/* O ZMK amarra DUAS coisas na mesma flag:
+ *   target_sources_ifdef(CONFIG_ZMK_BATTERY_REPORTING ... events/battery_state_changed.c)
+ *   target_sources_ifdef(CONFIG_ZMK_BATTERY_REPORTING ... battery.c)
+ * Ou seja, a implementacao do EVENTO vem junto com o amostrador de 60s. No
+ * dongle desligamos BATTERY_REPORTING (ele nao tem bateria e travava na
+ * amostragem), entao o evento de bateria de PERIFERICO ficaria sem simbolo --
+ * quebrando ate o central.c do proprio ZMK. Como o .c do ZMK nao e compilado
+ * aqui, fornecemos so a implementacao do evento (sem duplicar simbolo). */
+ZMK_EVENT_IMPL(zmk_peripheral_battery_state_changed);
+
 static struct zmk_widget_layer_status layer_status_widget;
 static struct zmk_widget_output_status output_status_widget;
 
