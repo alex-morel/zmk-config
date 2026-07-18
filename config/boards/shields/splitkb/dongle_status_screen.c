@@ -28,9 +28,11 @@
 static struct zmk_widget_layer_status layer_status_widget;
 static struct zmk_widget_output_status output_status_widget;
 
-#define STEP_MS 400           /* periodo do timer = duracao de cada estado do pisca */
-#define SCROLL_STEPS 18       /* 18 * 400ms = 7200ms de deslize (mais devagar) */
-#define BLINK_STEPS 8         /* 8 passos = 4 piscadas; 400ms cada = mais devagar */
+/* Tempos medidos do GIF do anime (big-o-cast-in-the-name-of-god.gif):
+ *   deslize da frase ~3.0s ; "YE NOT GUILTY" pulsa com periodo ~600ms. */
+#define STEP_MS 300           /* estado do pisca = 300ms -> periodo 600ms (= anime) */
+#define SCROLL_STEPS 10       /* 10 * 300ms = 3000ms de deslize (= anime) */
+#define BLINK_STEPS 8         /* 8 passos = 4 piscadas */
 #define FADE_MS 500
 
 static lv_obj_t *g_overlay;
