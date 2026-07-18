@@ -119,8 +119,9 @@ static void draw_normal(void) {
     snprintf(buf, sizeof(buf), "L%d", g_layer);
     draw_text(82, 20, buf, &lv_font_montserrat_16);
 #endif
+    /* porcentagem em fonte menor (8) pra nao competir com o header */
     snprintf(buf, sizeof(buf), "%d%%", g_battery);
-    draw_text(104, 24, buf, &lv_font_montserrat_16);
+    draw_text(110, 14, buf, &lv_font_montserrat_8);
 }
 
 static void redraw(void) {
