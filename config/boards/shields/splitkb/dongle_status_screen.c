@@ -33,7 +33,7 @@ static struct zmk_widget_output_status output_status_widget;
  *   suavemente, nao apaga) com periodo ~600ms, ~4 vezes. */
 #define TICK_MS 40            /* timer fino, pro pulso ficar suave */
 #define SCROLL_MS 3000        /* deslize (= anime) */
-#define PULSE_PERIOD 1000     /* periodo de um pulso (mais lento) */
+#define PULSE_PERIOD 600      /* periodo de um pulso (ritmo do anime) */
 #define PULSE_COUNT 4         /* 4 pulsos */
 #define PULSE_TOTAL (PULSE_PERIOD * PULSE_COUNT)
 #define PULSE_MIN_OPA 120     /* opacidade no ponto mais escuro (~47%, nao apaga) */
