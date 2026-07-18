@@ -9,6 +9,7 @@
  * (layer/keymap sao exclusivos da central).
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <zephyr/kernel.h>
 #include <lvgl.h>
@@ -82,12 +83,30 @@ static void draw_line(lv_coord_t x1, lv_coord_t y1, lv_coord_t x2, lv_coord_t y2
     lv_canvas_finish_layer(g_draw, &layer);
 }
 
-static void redraw(void) {
-    if (g_draw == NULL) {
-        return;
-    }
-    lv_canvas_fill_bg(g_draw, lv_color_white(), LV_OPA_COVER);
+/* ---------- animacao de boot: "ACTION!" em pe ---------- */
+/* A tela e retrato (32 de largura x 128 de altura), entao as 7 letras ficam
+ * EMPILHADAS, uma por linha: A / C / T / I / O / N / !
+ * Elas aparecem uma a uma (de cima pra baixo), seguram um instante e a tela
+ * normal entra. */
+#define BOOT_STEP_MS 200
+#define ACTION_N 7
+#define BOOT_HOLD_STEPS 4          /* ~800ms segurando o "ACTION!" completo */
+#define ACTION_Y0 1                /* y da 1a letra */
+#define ACTION_DY 18               /* espacamento (7 * 18 = 126, cabe em 128) */
 
+static const char *const ACTION_LETTERS[ACTION_N] = {"A", "C", "T", "I", "O", "N", "!"};
+static int g_boot_step;
+static bool g_boot_done;
+
+static void draw_boot(void) {
+    int shown = (g_boot_step < ACTION_N) ? g_boot_step : ACTION_N;
+    for (int i = 0; i < shown; i++) {
+        draw_text(ACTION_Y0 + i * ACTION_DY, ACTION_DY, ACTION_LETTERS[i],
+                  &lv_font_montserrat_16);
+    }
+}
+
+static void draw_normal(void) {
     char buf[16];
 
     /* --- header "the big 0" (empilhado, tamanhos diferentes) --- */
@@ -102,6 +121,21 @@ static void redraw(void) {
 #endif
     snprintf(buf, sizeof(buf), "%d%%", g_battery);
     draw_text(104, 24, buf, &lv_font_montserrat_16);
+}
+
+static void redraw(void) {
+    if (g_draw == NULL) {
+        return;
+    }
+    lv_canvas_fill_bg(g_draw, lv_color_white(), LV_OPA_COVER);
+
+    /* durante o boot mostra "ACTION!"; depois, a tela normal. (Eventos de
+     * bateria/camada chamam redraw() e caem aqui tambem -- por isso o teste.) */
+    if (!g_boot_done) {
+        draw_boot();
+    } else {
+        draw_normal();
+    }
 
     /* rotaciona draw_buf (32x128) -> out_buf (128x32), 90 graus */
     uint32_t ss = lv_draw_buf_width_to_stride(DH, CF);
@@ -145,6 +179,16 @@ static void batt_update_cb(struct batt_state s) {
 ZMK_DISPLAY_WIDGET_LISTENER(splitkb_batt, struct batt_state, batt_update_cb, batt_get_state)
 ZMK_SUBSCRIPTION(splitkb_batt, zmk_battery_state_changed);
 
+/* avanca a animacao de boot; no fim entrega a tela normal */
+static void boot_timer_cb(lv_timer_t *t) {
+    g_boot_step++;
+    if (g_boot_step >= ACTION_N + BOOT_HOLD_STEPS) {
+        g_boot_done = true;
+        lv_timer_delete(t);
+    }
+    redraw();
+}
+
 lv_obj_t *zmk_display_status_screen() {
     lv_obj_t *screen = lv_obj_create(NULL);
     /* remove a margem/padding padrao do LVGL pra usar a tela inteira */
@@ -161,7 +205,11 @@ lv_obj_t *zmk_display_status_screen() {
     lv_canvas_set_buffer(g_draw, draw_buf, DH, DW, CF);
     lv_obj_add_flag(g_draw, LV_OBJ_FLAG_HIDDEN);
 
+    /* comeca na animacao de boot ("ACTION!"), o timer conduz ate a tela normal */
+    g_boot_step = 0;
+    g_boot_done = false;
     redraw();
+    lv_timer_create(boot_timer_cb, BOOT_STEP_MS, NULL);
 
 #if SHOW_LAYER
     splitkb_layer_init();
