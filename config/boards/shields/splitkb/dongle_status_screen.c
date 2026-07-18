@@ -35,6 +35,9 @@
  * amostragem), entao o evento de bateria de PERIFERICO ficaria sem simbolo --
  * quebrando ate o central.c do proprio ZMK. Como o .c do ZMK nao e compilado
  * aqui, fornecemos so a implementacao do evento (sem duplicar simbolo). */
+/* fonte custom (bigzero.c) com o glifo Ø grande -- o logo do projeto */
+LV_FONT_DECLARE(bigzero);
+
 ZMK_EVENT_IMPL(zmk_peripheral_battery_state_changed);
 
 static struct zmk_widget_layer_status layer_status_widget;
@@ -243,12 +246,20 @@ lv_obj_t *zmk_display_status_screen() {
     lv_obj_set_style_text_color(screen, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
 
-    /* conexao (USB/BLE) no topo. Cor branca explicita (definir COR no obj do
-     * widget e seguro -- funcionou no build do Ø; so o no_scroll travava). */
+    /* LOGO "Ø" no topo (fonte custom bigzero) */
+    lv_obj_t *logo = lv_label_create(screen);
+    lv_label_set_text(logo, "\xC3\x98");            /* Ø em UTF-8 */
+    lv_obj_set_style_text_color(logo, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(logo, &bigzero, LV_PART_MAIN);
+    lv_obj_align(logo, LV_ALIGN_TOP_MID, 0, 18);
+
+    /* conexao (USB/BLE) — desceu pra logo acima das baterias, pra dar o topo
+     * ao logo. Cor branca explicita (definir COR no obj do widget e seguro;
+     * era o no_scroll que travava o boot). */
     zmk_widget_output_status_init(&output_status_widget, screen);
     lv_obj_set_style_text_color(zmk_widget_output_status_obj(&output_status_widget),
                                 lv_color_white(), LV_PART_MAIN);
-    lv_obj_align(zmk_widget_output_status_obj(&output_status_widget), LV_ALIGN_TOP_MID, 0, 40);
+    lv_obj_align(zmk_widget_output_status_obj(&output_status_widget), LV_ALIGN_BOTTOM_MID, 0, -88);
 
     /* camada atual no centro. Fonte PADRAO (16): a 48 o texto transbordava a
      * caixa do widget e gerava scrollbar (a listra que sobrava). */
