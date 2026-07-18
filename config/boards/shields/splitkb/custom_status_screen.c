@@ -66,6 +66,50 @@ static void draw_text(lv_coord_t y, lv_coord_t h, const char *txt, const lv_font
     lv_canvas_finish_layer(g_draw, &layer);
 }
 
+/* retangulo: contorno (filled=false) ou preenchido (filled=true) */
+static void draw_rect(lv_coord_t x0, lv_coord_t y0, lv_coord_t x1, lv_coord_t y1, bool filled) {
+    lv_draw_rect_dsc_t dsc;
+    lv_draw_rect_dsc_init(&dsc);
+    dsc.radius = 0;
+    if (filled) {
+        dsc.bg_color = lv_color_black();
+        dsc.bg_opa = LV_OPA_COVER;
+        dsc.border_width = 0;
+    } else {
+        dsc.bg_opa = LV_OPA_TRANSP;
+        dsc.border_color = lv_color_black();
+        dsc.border_opa = LV_OPA_COVER;
+        dsc.border_width = 1;
+    }
+
+    lv_layer_t layer;
+    lv_canvas_init_layer(g_draw, &layer);
+    lv_area_t coords = {x0, y0, x1, y1};
+    lv_draw_rect(&layer, &dsc, &coords);
+    lv_canvas_finish_layer(g_draw, &layer);
+}
+
+/* ---------- icone de bateria (deitado, no topo da tela) ----------
+ * A tela e retrato e tem so 32px de largura, entao o icone fica centrado
+ * horizontalmente e o numero vai LOGO ABAIXO dele (lado a lado nao cabe). */
+#define BATT_X0 4          /* corpo: x 4..24 (20 de largura) */
+#define BATT_X1 24
+#define BATT_Y 3           /* corpo: y 3..14 (11 de altura)  */
+#define BATT_H 11
+
+static void draw_battery(uint8_t pct) {
+    /* corpo (contorno) */
+    draw_rect(BATT_X0, BATT_Y, BATT_X1, BATT_Y + BATT_H, false);
+    /* polo positivo, na direita */
+    draw_rect(BATT_X1 + 1, BATT_Y + 3, BATT_X1 + 3, BATT_Y + BATT_H - 3, true);
+    /* preenchimento proporcional a carga (2px de folga interna) */
+    int inner = (BATT_X1 - BATT_X0) - 4;
+    int fill = (inner * (pct > 100 ? 100 : pct)) / 100;
+    if (fill > 0) {
+        draw_rect(BATT_X0 + 2, BATT_Y + 2, BATT_X0 + 2 + fill, BATT_Y + BATT_H - 2, true);
+    }
+}
+
 /* barra diagonal (pra "cortar" o zero, estilo Big-O) */
 static void draw_line(lv_coord_t x1, lv_coord_t y1, lv_coord_t x2, lv_coord_t y2) {
     lv_draw_line_dsc_t dsc;
@@ -109,19 +153,22 @@ static void draw_boot(void) {
 static void draw_normal(void) {
     char buf[16];
 
-    /* --- header "the big 0" (empilhado, tamanhos diferentes) --- */
-    draw_text(0, 12, "the", &lv_font_montserrat_8);   /* menor fonte */
-    draw_text(10, 22, "big", &lv_font_montserrat_16); /* 16 cabe as 3 letras em 32px */
-    draw_text(28, 44, "\xC3\x98", &bigzero);          /* Ø = zero cortado (fonte custom) */
+    /* --- BATERIA no topo: icone + numero (sem '%') --- */
+    draw_battery(g_battery);
+    snprintf(buf, sizeof(buf), "%d", g_battery);
+    draw_text(16, 12, buf, &lv_font_montserrat_8);
 
-    /* --- widgets (embaixo do header) --- */
+    /* --- header "the big 0" (abaixo da bateria; mesmo espacamento de antes,
+           so deslocado 30px pra baixo) --- */
+    draw_text(30, 12, "the", &lv_font_montserrat_8);   /* menor fonte */
+    draw_text(40, 22, "big", &lv_font_montserrat_16);  /* 16 cabe as 3 letras em 32px */
+    draw_text(58, 44, "\xC3\x98", &bigzero);           /* Ø = zero cortado (fonte custom) */
+
+    /* --- camada (so na central; com dongle as metades sao perifericas) --- */
 #if SHOW_LAYER
     snprintf(buf, sizeof(buf), "L%d", g_layer);
-    draw_text(82, 20, buf, &lv_font_montserrat_16);
+    draw_text(106, 20, buf, &lv_font_montserrat_16);
 #endif
-    /* porcentagem em fonte menor (8) pra nao competir com o header */
-    snprintf(buf, sizeof(buf), "%d%%", g_battery);
-    draw_text(110, 14, buf, &lv_font_montserrat_8);
 }
 
 static void redraw(void) {
