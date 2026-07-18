@@ -33,7 +33,7 @@ static struct zmk_widget_output_status output_status_widget;
  *   suavemente, nao apaga) com periodo ~600ms, ~4 vezes. */
 #define TICK_MS 40            /* timer fino, pro pulso ficar suave */
 #define SCROLL_MS 3000        /* deslize (= anime) */
-#define PULSE_PERIOD 600      /* periodo de um pulso (= anime) */
+#define PULSE_PERIOD 1000     /* periodo de um pulso (mais lento) */
 #define PULSE_COUNT 4         /* 4 pulsos */
 #define PULSE_TOTAL (PULSE_PERIOD * PULSE_COUNT)
 #define PULSE_MIN_OPA 120     /* opacidade no ponto mais escuro (~47%, nao apaga) */
@@ -95,10 +95,11 @@ static void boot_animation(lv_obj_t *screen) {
     lv_obj_set_scrollbar_mode(g_overlay, LV_SCROLLBAR_MODE_OFF);
     lv_obj_remove_flag(g_overlay, LV_OBJ_FLAG_SCROLLABLE);
 
-    /* 1) TEXTO DESLIZANDO (montserrat 28). Faixa de x FIXA (sem update_layout):
-     *    o texto tem ~640px; entra em x=240 e sai todo em x=-720. */
+    /* 1) TEXTO DESLIZANDO (montserrat 28). So "CAST IN THE NAME OF GOD" (o
+     *    "YE NOT GUILTY" nao desliza; aparece pulsando na fase seguinte).
+     *    Texto ~340px; entra em x=240 e sai todo em x=-380. */
     g_scroll = lv_label_create(g_overlay);
-    lv_label_set_text(g_scroll, "CAST IN THE NAME OF GOD   YE NOT GUILTY");
+    lv_label_set_text(g_scroll, "CAST IN THE NAME OF GOD");
     lv_obj_set_style_text_color(g_scroll, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(g_scroll, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_obj_set_y(g_scroll, 105);        /* ~centro vertical pra fonte 28 */
@@ -106,7 +107,7 @@ static void boot_animation(lv_obj_t *screen) {
     lv_anim_t a;
     lv_anim_init(&a);
     lv_anim_set_var(&a, g_scroll);
-    lv_anim_set_values(&a, 240, -720);
+    lv_anim_set_values(&a, 240, -380);
     lv_anim_set_time(&a, SCROLL_MS);
     lv_anim_set_exec_cb(&a, anim_set_x);
     lv_anim_set_path_cb(&a, lv_anim_path_linear);
