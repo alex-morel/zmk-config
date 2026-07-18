@@ -29,16 +29,20 @@ static struct zmk_widget_layer_status layer_status_widget;
 static struct zmk_widget_output_status output_status_widget;
 
 /* Tempos medidos do GIF do anime (big-o-cast-in-the-name-of-god.gif):
- *   deslize da frase ~3.0s ; "YE NOT GUILTY" pulsa com periodo ~600ms. */
-#define STEP_MS 300           /* estado do pisca = 300ms -> periodo 600ms (= anime) */
-#define SCROLL_STEPS 10       /* 10 * 300ms = 3000ms de deslize (= anime) */
-#define BLINK_STEPS 8         /* 8 passos = 4 piscadas */
+ *   deslize da frase ~3.0s ; "YE NOT GUILTY" PULSA (escurece e clareia
+ *   suavemente, nao apaga) com periodo ~600ms, ~4 vezes. */
+#define TICK_MS 40            /* timer fino, pro pulso ficar suave */
+#define SCROLL_MS 3000        /* deslize (= anime) */
+#define PULSE_PERIOD 600      /* periodo de um pulso (= anime) */
+#define PULSE_COUNT 4         /* 4 pulsos */
+#define PULSE_TOTAL (PULSE_PERIOD * PULSE_COUNT)
+#define PULSE_MIN_OPA 120     /* opacidade no ponto mais escuro (~47%, nao apaga) */
 #define FADE_MS 500
 
 static lv_obj_t *g_overlay;
 static lv_obj_t *g_scroll;
 static lv_obj_t *g_blink;
-static int g_phase;
+static int g_elapsed;         /* ms desde o inicio da animacao */
 
 static void anim_set_opa(void *var, int32_t v) {
     lv_obj_set_style_opa((lv_obj_t *)var, (lv_opa_t)v, LV_PART_MAIN);
@@ -47,20 +51,25 @@ static void anim_set_x(void *var, int32_t v) {
     lv_obj_set_x((lv_obj_t *)var, v);
 }
 
-/* um timer so cuida de: esperar o deslize -> piscar -> revelar */
+/* um timer so cuida de: esperar o deslize -> pulsar -> revelar */
 static void seq_timer_cb(lv_timer_t *t) {
-    if (g_phase < SCROLL_STEPS) {          /* deslize acontecendo (lv_anim) */
-        g_phase++;
+    g_elapsed += TICK_MS;
+
+    if (g_elapsed < SCROLL_MS) {            /* deslize acontecendo (lv_anim) */
         return;
     }
-    int b = g_phase - SCROLL_STEPS;
-    if (b < BLINK_STEPS) {                  /* pisca "YE NOT GUILTY" */
-        if (b == 0) {
-            lv_obj_add_flag(g_scroll, LV_OBJ_FLAG_HIDDEN);   /* esconde o deslize */
+
+    int pt = g_elapsed - SCROLL_MS;         /* tempo dentro da fase de pulso */
+    if (pt < PULSE_TOTAL) {
+        if (pt < TICK_MS) {                 /* primeira entrada: esconde o deslize */
+            lv_obj_add_flag(g_scroll, LV_OBJ_FLAG_HIDDEN);
         }
-        lv_obj_set_style_opa(g_blink, (b % 2 == 0) ? LV_OPA_COVER : LV_OPA_TRANSP,
-                             LV_PART_MAIN);
-        g_phase++;
+        /* onda triangular: cheio (255) -> escuro (MIN) -> cheio, a cada periodo */
+        int tp = pt % PULSE_PERIOD;         /* 0..PULSE_PERIOD */
+        int half = PULSE_PERIOD / 2;
+        int tri = (tp < half) ? tp : (PULSE_PERIOD - tp);   /* 0..half..0 */
+        int opa = 255 - (255 - PULSE_MIN_OPA) * tri / half;
+        lv_obj_set_style_opa(g_blink, (lv_opa_t)opa, LV_PART_MAIN);
         return;
     }
     /* revela: overlay some (fade) */
@@ -98,7 +107,7 @@ static void boot_animation(lv_obj_t *screen) {
     lv_anim_init(&a);
     lv_anim_set_var(&a, g_scroll);
     lv_anim_set_values(&a, 240, -720);
-    lv_anim_set_time(&a, SCROLL_STEPS * STEP_MS);
+    lv_anim_set_time(&a, SCROLL_MS);
     lv_anim_set_exec_cb(&a, anim_set_x);
     lv_anim_set_path_cb(&a, lv_anim_path_linear);
     lv_anim_start(&a);
@@ -112,8 +121,8 @@ static void boot_animation(lv_obj_t *screen) {
     lv_obj_set_style_opa(g_blink, LV_OPA_TRANSP, LV_PART_MAIN);
 
     /* 3) o timer conduz a sequencia */
-    g_phase = 0;
-    lv_timer_create(seq_timer_cb, STEP_MS, NULL);
+    g_elapsed = 0;
+    lv_timer_create(seq_timer_cb, TICK_MS, NULL);
 }
 
 lv_obj_t *zmk_display_status_screen() {
