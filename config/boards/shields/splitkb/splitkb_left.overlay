@@ -26,7 +26,7 @@
         sampling-hz = <100>;
 
         x-ch {
-            io-channels = <&adc 0>;
+            io-channels = <&adc 2>;
             mv-mid = <1660>;        /* calibrado no teste */
             mv-min-max = <1600>;
             mv-deadzone = <30>;
@@ -37,7 +37,7 @@
             invert;                   /* cima<->baixo invertido (eixo vertical) */
         };
         y-ch {
-            io-channels = <&adc 1>;
+            io-channels = <&adc 3>;
             mv-mid = <1710>;
             mv-min-max = <1600>;
             mv-deadzone = <30>;
