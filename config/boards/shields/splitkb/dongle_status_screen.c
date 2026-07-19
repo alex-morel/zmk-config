@@ -460,6 +460,15 @@ ZMK_DISPLAY_WIDGET_LISTENER(dongle_host_verdict, struct host_state, host_update_
 ZMK_SUBSCRIPTION(dongle_host_verdict, zmk_endpoint_changed);
 ZMK_SUBSCRIPTION(dongle_host_verdict, zmk_ble_active_profile_changed);
 
+/* VIGIA (250ms): cobre as trocas que o ZMK faz EM SILENCIO. Ex.: com slot BT
+ * vazio o endpoint efetivo ja e o USB (fallback); apertar o slot USB muda so
+ * a PREFERENCIA -- endpoint efetivo igual, perfil igual -> NENHUM evento e
+ * emitido, e o "THE NEGOTIATOR" ficava orfao na tela. O vigia le o estado e
+ * passa pela MESMA logica do listener (que ja deduplica); eventos continuam
+ * dando resposta instantanea nos casos com evento. So le estado do BLE
+ * (barato) e roda na thread do display (mexer no LVGL aqui e seguro). */
+static void host_poll_cb(lv_timer_t *t) { host_update_cb(host_get_state(NULL)); }
+
 lv_obj_t *zmk_display_status_screen() {
     lv_obj_t *screen = lv_obj_create(NULL);
 
@@ -516,6 +525,7 @@ lv_obj_t *zmk_display_status_screen() {
     lv_obj_set_style_text_font(g_verdict_lbl, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_obj_center(g_verdict_lbl);
     dongle_host_verdict_init();
+    lv_timer_create(host_poll_cb, 250, NULL); /* vigia das trocas sem evento */
 
 #ifdef CONFIG_SYS_HEAP_RUNTIME_STATS
     lv_timer_create(heap_report_cb, 10000, NULL);   /* diagnostico: heap a cada 10s */
