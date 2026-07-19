@@ -34,34 +34,10 @@
         events = <0>;
     };
 
-    /*
-     * BOTAO DO STUDIO (fisico, no dongle).
-     *
-     * O dongle nao tem teclas nem posicoes no keymap, entao o botao NAO pode
-     * passar pelo keymap. Usamos "kscan sideband behaviors": ele embrulha um
-     * kscan proprio e dispara a behavior DIRETO, fora do processamento do
-     * keymap -- que e exatamente o caso de uso previsto pra isso.
-     *
-     * >>> FIACAO: botao entre o pino D4 e o GND. <<<
-     * (ativo-baixo com pull-up interno, entao nao precisa de resistor externo)
-     */
-    studio_btn_scan: studio_btn_scan {
-        compatible = "zmk,kscan-gpio-direct";
-        input-gpios = <&pro_micro 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-    };
-
-    studio_btn: studio_btn {
-        compatible = "zmk,kscan-sideband-behaviors";
-        kscan = <&studio_btn_scan>;
-        auto-enable;
-
-        /* uma tecla so -> linha e coluna 0 */
-        unlock {
-            column = <0>;
-            row = <0>;
-            bindings = <&studio_unlock>;
-        };
-    };
+    /* Botao fisico do Studio (kscan-sideband em D4): REMOVIDO em 2026-07-19.
+     * A carcaca nao vai ter esse botao, e com ZMK_STUDIO_LOCKING=n ele era
+     * redundante (o Studio ja vive destravado). So o RESET fisico fica:
+     * push button 6x6 entre RST e GND (duplo-toque = bootloader UF2). */
 };
 
 /*
