@@ -295,30 +295,61 @@ static void boot_animation(lv_obj_t *screen) {
  *   1 = USB do dongle        -> "YE NOT GUILTY"
  *   2 = Bluetooth perfil 0   -> "YE GUILTY"
  *   3 = Bluetooth perfil 1   -> "YE NOT"
- * Ao trocar de slot, a mensagem PULSA no centro (mesmo ritmo do boot) num
- * overlay preto e some. Usa zmk_endpoint_get_preferred(): reflete a ESCOLHA
- * na hora, mesmo que o host daquele slot ainda nem esteja conectado. */
+ * Ao trocar de slot, a mensagem PULSA 4x no centro (mesmo ritmo do boot) num
+ * overlay preto e some. Se o slot BT escolhido esta VAZIO (sem host pareado),
+ * apos o pulso entra "THE NEGOTIATOR" ESTATICO enquanto o dongle anuncia;
+ * quando um host pareia PELA PRIMEIRA VEZ, "WE HAVE COME TO TERMS" aparece
+ * ESTATICO por uns segundos e a tela volta ao status. (Pedido do usuario: so
+ * os vereditos de slot pulsam.) Reconexao com host ja conhecido nao gera
+ * cerimonia. Usa zmk_endpoint_get_preferred(): reflete a ESCOLHA na hora,
+ * mesmo sem o host conectado. */
+enum verdict_mode {
+    VERDICT_PULSE,  /* pulsa 4x e some (ou emenda na espera, se for o caso) */
+    VERDICT_STATIC, /* estatico por PULSE_TOTAL ms e some */
+    VERDICT_WAIT,   /* "THE NEGOTIATOR": estatico ate o estado mudar */
+};
+
 static lv_obj_t *g_verdict_ov;
 static lv_obj_t *g_verdict_lbl;
 static lv_timer_t *g_verdict_timer;
 static int g_verdict_elapsed;
+static enum verdict_mode g_verdict_mode;
+
+/* estado atual do host, mantido pelo listener (o timer le pra encadear) */
+static bool g_host_waiting; /* slot BT vazio e sem conexao = anunciando */
+
+static void verdict_start(const char *txt, enum verdict_mode mode);
 
 static void verdict_timer_cb(lv_timer_t *t) {
+    if (g_verdict_mode == VERDICT_WAIT) {
+        return; /* estatico, fica na tela ate o estado mudar */
+    }
+
     g_verdict_elapsed += TICK_MS;
+
     if (g_verdict_elapsed >= PULSE_TOTAL) {
+        if (g_host_waiting) {
+            /* acabou a cerimonia e o slot segue vazio -> emenda na espera */
+            verdict_start("THE NEGOTIATOR", VERDICT_WAIT);
+            return;
+        }
         lv_obj_add_flag(g_verdict_ov, LV_OBJ_FLAG_HIDDEN);
         lv_timer_delete(t);
         g_verdict_timer = NULL;
         return;
     }
-    int tp = g_verdict_elapsed % PULSE_PERIOD;
-    int half = PULSE_PERIOD / 2;
-    int tri = (tp < half) ? tp : (PULSE_PERIOD - tp);
-    int opa = 255 - (255 - PULSE_MIN_OPA) * tri / half;
-    lv_obj_set_style_opa(g_verdict_lbl, (lv_opa_t)opa, LV_PART_MAIN);
+
+    if (g_verdict_mode == VERDICT_PULSE) {
+        int tp = g_verdict_elapsed % PULSE_PERIOD;
+        int half = PULSE_PERIOD / 2;
+        int tri = (tp < half) ? tp : (PULSE_PERIOD - tp);
+        int opa = 255 - (255 - PULSE_MIN_OPA) * tri / half;
+        lv_obj_set_style_opa(g_verdict_lbl, (lv_opa_t)opa, LV_PART_MAIN);
+    }
+    /* VERDICT_STATIC: opacidade cheia, so espera o tempo passar */
 }
 
-static void verdict_show(const char *txt) {
+static void verdict_start(const char *txt, enum verdict_mode mode) {
     if (g_verdict_ov == NULL) {
         return;
     }
@@ -326,54 +357,96 @@ static void verdict_show(const char *txt) {
     lv_obj_set_style_opa(g_verdict_lbl, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_remove_flag(g_verdict_ov, LV_OBJ_FLAG_HIDDEN);
     g_verdict_elapsed = 0;
+    g_verdict_mode = mode;
     if (g_verdict_timer == NULL) {
         g_verdict_timer = lv_timer_create(verdict_timer_cb, TICK_MS, NULL);
     }
 }
 
+static void verdict_stop(void) {
+    if (g_verdict_timer != NULL) {
+        lv_timer_delete(g_verdict_timer);
+        g_verdict_timer = NULL;
+    }
+    if (g_verdict_ov != NULL) {
+        lv_obj_add_flag(g_verdict_ov, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
 struct host_state {
     uint8_t slot; /* 1..3; 0 = outro (perfil BT >1 etc.) */
+    bool ble;
+    bool open; /* perfil BT sem host pareado */
+    bool conn; /* perfil BT com host conectado agora */
 };
 static struct host_state host_get_state(const zmk_event_t *eh) {
     struct zmk_endpoint_instance ep = zmk_endpoint_get_preferred();
-    uint8_t slot = 0;
+    struct host_state s = {0};
     if (ep.transport == ZMK_TRANSPORT_USB) {
-        slot = 1;
+        s.slot = 1;
     } else if (ep.transport == ZMK_TRANSPORT_BLE) {
+        s.ble = true;
+        s.open = zmk_ble_active_profile_is_open();
+        s.conn = zmk_ble_active_profile_is_connected();
         if (ep.ble.profile_index == 0) {
-            slot = 2;
+            s.slot = 2;
         } else if (ep.ble.profile_index == 1) {
-            slot = 3;
+            s.slot = 3;
         }
     }
-    return (struct host_state){.slot = slot};
+    return s;
 }
 static void host_update_cb(struct host_state s) {
-    static uint8_t prev = 0xFF;
-    if (prev == 0xFF) {          /* chamada inicial do init: so registra */
-        prev = s.slot;
-        return;
+    static struct host_state prev;
+    static bool first = true;
+
+    bool was_first = first;
+    struct host_state old = prev;
+    prev = s;
+    first = false;
+    g_host_waiting = s.ble && s.open && !s.conn;
+
+    if (was_first) {
+        return; /* chamada inicial do init: so registra o estado */
     }
-    if (s.slot == prev) {
-        return;
-    }
-    prev = s.slot;
     /* durante a animacao de boot, nao brigar pela tela */
     if (g_overlay != NULL && !lv_obj_has_flag(g_overlay, LV_OBJ_FLAG_HIDDEN)) {
         return;
     }
-    switch (s.slot) {
-    case 1:
-        verdict_show("YE NOT GUILTY");
-        break;
-    case 2:
-        verdict_show("YE GUILTY");
-        break;
-    case 3:
-        verdict_show("YE NOT");
-        break;
-    default:
-        break;
+
+    if (s.slot != old.slot) {
+        switch (s.slot) {
+        case 1:
+            verdict_start("YE NOT GUILTY", VERDICT_PULSE);
+            break;
+        case 2:
+            verdict_start("YE GUILTY", VERDICT_PULSE);
+            break;
+        case 3:
+            verdict_start("YE NOT", VERDICT_PULSE);
+            break;
+        default:
+            verdict_stop();
+            break;
+        }
+        return; /* se o slot esta vazio, o fim do pulso emenda na espera */
+    }
+
+    /* mesmo slot: transicoes de conexao */
+    if (s.ble && old.open && s.conn && !old.conn) {
+        /* pareou PELA PRIMEIRA VEZ (o perfil era vazio e agora conectou) */
+        verdict_start("WE HAVE COME TO TERMS", VERDICT_STATIC);
+        return;
+    }
+    if (g_host_waiting && g_verdict_timer == NULL) {
+        /* slot vazio anunciando e nada na tela (ex.: host sumiu do nada) */
+        verdict_start("THE NEGOTIATOR", VERDICT_WAIT);
+        return;
+    }
+    if (!g_host_waiting && g_verdict_timer != NULL && g_verdict_mode == VERDICT_WAIT &&
+        !(s.ble && s.conn)) {
+        /* espera encerrada sem conexao (ex.: saiu do BT por outro caminho) */
+        verdict_stop();
     }
 }
 ZMK_DISPLAY_WIDGET_LISTENER(dongle_host_verdict, struct host_state, host_update_cb, host_get_state)
