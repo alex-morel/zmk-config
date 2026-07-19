@@ -146,8 +146,12 @@ endchoice
 config ZMK_DISPLAY_DEDICATED_THREAD_STACK_SIZE
     default 4096
 
+# Pool do LVGL: 16KB esgotava com a tela atual (animacao de boot com fonte 48
+# renderizando glifos grandes por frame + widgets de bateria + rotulo de
+# camada). Alocacao falhada do LVGL e SILENCIOSA sem LV_USE_LOG e rende
+# listras/lixo/corrupcao nao-deterministica. Ha folga de RAM (~60KB).
 config LV_Z_MEM_POOL_SIZE
-    default 16384
+    default 32768
 
 endif # ZMK_DISPLAY
 
