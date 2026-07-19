@@ -14,7 +14,10 @@ include:
     cmake-args: -DCONFIG_ZMK_STUDIO=y
 
   # As duas metades sao perifericas (sem Studio, sem USB pro host).
+  # >>> TEMPORARIO: log USB na ESQUERDA pra diagnosticar a tecla &bootloader
+  # (nao entra em bootloader / nao monta o NICENANO). Depois remover o snippet.
   - board: nice_nano//zmk
     shield: splitkb_left
+    snippet: zmk-usb-logging
   - board: nice_nano//zmk
     shield: splitkb_right
