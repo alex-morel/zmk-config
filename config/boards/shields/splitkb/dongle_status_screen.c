@@ -193,14 +193,16 @@ ZMK_SUBSCRIPTION(dongle_periph_batt, zmk_peripheral_battery_state_changed);
  *
  * Nova sequencia, so com updates de area pequena (a caixa dos labels):
  *   1) "CAST IN THE NAME OF GOD" aparece centrado (quebrado em linhas), ~2s;
- *   2) some, e "YE NOT GUILTY" PULSA no centro (periodo 600ms, 4x, fade
- *      suave 100%<->47% -- ritmo medido do GIF do anime);
- *   3) o overlay e ESCONDIDO de uma vez (um unico redraw de tela cheia),
+ *   2) a frase corre da direita pra esquerda e FREIA (ease-out) exatamente
+ *      com o "YE NOT GUILTY" no centro da tela;
+ *   3) o "YE NOT GUILTY" PULSA no lugar (periodo 600ms, 4x, fade suave
+ *      100%<->47% -- ritmo medido do GIF do anime);
+ *   4) o overlay e ESCONDIDO de uma vez (um unico redraw de tela cheia),
  *      revelando a tela de status. Sem fade de tela inteira.
- * Quando a tela for soldada e o SPI subir pra 30MHz+, da pra reintroduzir o
- * deslize original se quisermos. */
-#define TICK_MS 60            /* passo do timer (pulso ainda fica suave) */
-#define CAST_MS 2000          /* frase parada na tela */
+ * O deslize so e viavel com a tela SOLDADA no SPIM3 a 32MHz (frame ~29ms);
+ * na era dupont/8MHz isso saturava a fila do display e derrubava o dongle. */
+#define TICK_MS 30            /* passo do timer (~33fps no deslize) */
+#define SLIDE_MS 3000         /* duracao da corrida da frase */
 #define PULSE_PERIOD 600      /* periodo de um pulso (ritmo do anime) */
 #define PULSE_COUNT 4
 #define PULSE_TOTAL (PULSE_PERIOD * PULSE_COUNT)
@@ -210,18 +212,26 @@ static lv_obj_t *g_overlay;
 static lv_obj_t *g_cast;
 static lv_obj_t *g_blink;
 static int g_elapsed;         /* ms desde o inicio da animacao */
+static int g_x_start, g_x_end;
 
-/* fases: frase parada -> pulso -> esconder overlay */
+/* fases: frase correndo (ease-out) -> pulso -> esconder overlay */
 static void seq_timer_cb(lv_timer_t *t) {
     g_elapsed += TICK_MS;
 
-    if (g_elapsed < CAST_MS) {
-        return;                              /* frase parada, zero redraw */
+    if (g_elapsed <= SLIDE_MS) {
+        /* ease-out cubico em inteiros: f = 1 - (1-t)^3, t e f em 0..1024 */
+        int32_t tt = 1024 - (int32_t)g_elapsed * 1024 / SLIDE_MS;
+        int32_t f = 1024 - ((tt * tt >> 10) * tt >> 10);
+        int x = g_x_start + (int)(((int64_t)(g_x_end - g_x_start) * f) >> 10);
+        lv_obj_align(g_cast, LV_ALIGN_LEFT_MID, x, 0);
+        return;
     }
 
-    int pt = g_elapsed - CAST_MS;
+    int pt = g_elapsed - SLIDE_MS;
     if (pt < PULSE_TOTAL) {
-        if (pt < TICK_MS) {                  /* primeira entrada: troca de fase */
+        if (pt <= TICK_MS) {    /* primeira entrada da fase (pt chega == TICK_MS) */
+            /* troca de fase: a frase parou com o "YE NOT GUILTY" NA MESMA
+             * posicao do g_blink centrado -> swap invisivel */
             lv_obj_add_flag(g_cast, LV_OBJ_FLAG_HIDDEN);
         }
         /* onda triangular: cheio -> escuro -> cheio a cada periodo */
@@ -248,22 +258,31 @@ static void boot_animation(lv_obj_t *screen) {
     lv_obj_set_scrollbar_mode(g_overlay, LV_SCROLLBAR_MODE_OFF);
     lv_obj_remove_flag(g_overlay, LV_OBJ_FLAG_SCROLLABLE);
 
-    /* 1) frase centrada, quebrada em linhas (largura fixa = quebra automatica) */
+    /* 1) a frase inteira numa linha so (sem largura fixa = sem quebra),
+     * comecando fora da tela a direita */
     g_cast = lv_label_create(g_overlay);
-    lv_obj_set_width(g_cast, 220);
-    lv_label_set_text(g_cast, "CAST IN THE NAME OF GOD");
-    lv_obj_set_style_text_align(g_cast, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_label_set_text(g_cast, "CAST IN THE NAME OF GOD   YE NOT GUILTY");
     lv_obj_set_style_text_color(g_cast, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(g_cast, &lv_font_montserrat_28, LV_PART_MAIN);
-    lv_obj_center(g_cast);
 
-    /* 2) "YE NOT GUILTY", comeca invisivel */
+    /* 2) "YE NOT GUILTY" centrado, invisivel ate a fase do pulso */
     g_blink = lv_label_create(g_overlay);
     lv_label_set_text(g_blink, "YE NOT GUILTY");
     lv_obj_set_style_text_color(g_blink, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(g_blink, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_obj_center(g_blink);
     lv_obj_set_style_opa(g_blink, LV_OPA_TRANSP, LV_PART_MAIN);
+
+    /* Ponto de parada calculado com as larguras REAIS dos labels: o centro
+     * do trecho final ("YE NOT GUILTY") tem que cair no centro da tela
+     * (x=120), que e exatamente onde o g_blink centrado esta -> a troca
+     * frase->pulso nao mexe um pixel. */
+    lv_obj_update_layout(g_overlay);
+    int w_full = lv_obj_get_width(g_cast);
+    int w_tail = lv_obj_get_width(g_blink);
+    g_x_start = 240;                            /* fora da tela, a direita */
+    g_x_end = 120 - w_full + w_tail / 2;
+    lv_obj_align(g_cast, LV_ALIGN_LEFT_MID, g_x_start, 0);
 
     /* 3) o timer conduz a sequencia */
     g_elapsed = 0;
