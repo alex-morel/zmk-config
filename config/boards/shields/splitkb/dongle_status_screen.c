@@ -353,6 +353,13 @@ static void verdict_start(const char *txt, enum verdict_mode mode) {
     if (g_verdict_ov == NULL) {
         return;
     }
+    /* vereditos de slot (PULSE) sao curtos -> fonte 28; "THE NEGOTIATOR" e
+     * "WE HAVE COME TO TERMS" (WAIT/STATIC) sao longos -> fonte 16, mesma
+     * pros dois, pra caber nos 240px da tela */
+    lv_obj_set_style_text_font(g_verdict_lbl,
+                               (mode == VERDICT_PULSE) ? &lv_font_montserrat_28
+                                                       : &lv_font_montserrat_16,
+                               LV_PART_MAIN);
     lv_label_set_text(g_verdict_lbl, txt);
     lv_obj_set_style_opa(g_verdict_lbl, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_remove_flag(g_verdict_ov, LV_OBJ_FLAG_HIDDEN);
