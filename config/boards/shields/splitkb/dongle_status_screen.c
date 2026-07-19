@@ -18,7 +18,11 @@
  */
 
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <lvgl.h>
+#ifdef CONFIG_SYS_HEAP_RUNTIME_STATS
+#include <lvgl_mem.h>
+#endif
 
 #include <zmk/display.h>
 #include <zmk/display/status_screen.h>
@@ -27,6 +31,23 @@
 #include <zmk/events/battery_state_changed.h>
 #include <zmk/events/layer_state_changed.h>
 #include <zmk/keymap.h>
+
+LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
+
+/* ---------- DIAGNOSTICO: relatorio periodico do heap do LVGL ----------
+ * Investigando a corrupcao da tela que comeca "algum tempo depois de ligado":
+ * se o pool do LVGL vaza/fragmenta, o numero de alocado sobe ate falhar --
+ * este timer loga a curva a cada 10s pelo log NORMAL do ZMK (o LV_USE_LOG
+ * travou o boot em qualquer modo; nao usar). Compila pra nada quando
+ * SYS_HEAP_RUNTIME_STATS esta desligado (build de producao). */
+#ifdef CONFIG_SYS_HEAP_RUNTIME_STATS
+static void heap_report_cb(lv_timer_t *t) {
+    struct sys_memory_stats st;
+    lvgl_heap_stats(&st);
+    LOG_INF("lvgl heap: alocado %zu livre %zu pico %zu", st.allocated_bytes, st.free_bytes,
+            st.max_allocated_bytes);
+}
+#endif
 
 /* O ZMK amarra DUAS coisas na mesma flag:
  *   target_sources_ifdef(CONFIG_ZMK_BATTERY_REPORTING ... events/battery_state_changed.c)
@@ -288,6 +309,10 @@ lv_obj_t *zmk_display_status_screen() {
     dongle_periph_batt_init();
 
     boot_animation(screen);
+
+#ifdef CONFIG_SYS_HEAP_RUNTIME_STATS
+    lv_timer_create(heap_report_cb, 10000, NULL);   /* diagnostico: heap a cada 10s */
+#endif
 
     return screen;
 }
