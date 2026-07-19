@@ -64,10 +64,39 @@
     };
 };
 
-/* Barramento SPI do pro_micro. O CS do display fica aqui (cs-gpios); o filho
- * gc9a01@0 (reg=0) usa o 1o cs-gpios. */
-&pro_micro_spi {
+/*
+ * BARRAMENTO DA TELA: SPIM3, nao o pro_micro_spi.
+ * O pro_micro_spi do nice!nano e o SPIM1, que tem TETO FISICO de 8MHz no
+ * nRF52840 -- pedir mais seria aceito em silencio e clampado. So o SPIM3
+ * chega a 32MHz (e por isso que o prospector roda a 30MHz+). Mesmos pinos
+ * fisicos (SCK=P1.13/D15, MOSI=P0.10/D16), so troca o periferico interno.
+ * SPIM3 so faz 8/16/32MHz -- nao existe degrau de 24.
+ * MISO omitido de proposito: GC9A01 e write-only, e isso libera o D14.
+ */
+&pro_micro_spi { status = "disabled"; };
+
+&pinctrl {
+    spi3_default: spi3_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 10)>;
+            nordic,drive-mode = <NRF_DRIVE_H0H1>;   /* drive alto: exigido a 32MHz */
+        };
+    };
+    spi3_sleep: spi3_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 10)>;
+            low-power-enable;
+        };
+    };
+};
+
+&spi3 {
     status = "okay";
+    pinctrl-0 = <&spi3_default>;
+    pinctrl-1 = <&spi3_sleep>;
+    pinctrl-names = "default", "sleep";
     cs-gpios = <&pro_micro 10 GPIO_ACTIVE_LOW>;    /* CS da tela */
 };
 
@@ -78,7 +107,7 @@
         compatible = "zephyr,mipi-dbi-spi";
         #address-cells = <1>;
         #size-cells = <0>;
-        spi-dev = <&pro_micro_spi>;
+        spi-dev = <&spi3>;
         dc-gpios = <&pro_micro 9 GPIO_ACTIVE_HIGH>;
         reset-gpios = <&pro_micro 8 GPIO_ACTIVE_LOW>;
         write-only;                 /* GC9A01 nao le -> dispensa MISO */
@@ -86,12 +115,11 @@
         gc9a01: gc9a01@0 {
             compatible = "galaxycore,gc9x01x";
             reg = <0>;
-            /* 4MHz: PALIATIVO pra fiacao dupont degradada (2026-07-19: mesmo
-             * a 8MHz os writes corrompiam -- janela deslocada, tela deslizando).
-             * Metade da velocidade = dobro da margem contra ruido. Frame cheio
-             * fica ~230ms. QUANDO A TELA FOR SOLDADA: subir em degraus
-             * 16 -> 24 -> 32MHz e remover o LV_Z_FULL_REFRESH do defconfig. */
-            mipi-max-frequency = <DT_FREQ_M(4)>;
+            /* Tela SOLDADA (2026-07-19) -> degraus: 16MHz (atual) e depois
+             * 32MHz se estavel (SPIM3 nao tem 24). Frame cheio a 16MHz ~58ms.
+             * A 32MHz estavel: remover LV_Z_FULL_REFRESH e baixar
+             * LV_DEF_REFR_PERIOD no defconfig (ver comentarios la). */
+            mipi-max-frequency = <DT_FREQ_M(16)>;
             /* modo SPI 4 fios (Type C3) e o default do mipi-dbi-spi */
             pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
             width = <240>;
