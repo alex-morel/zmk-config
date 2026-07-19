@@ -8,17 +8,13 @@ include:
 
   # --- Teclado split com DONGLE ---
   # O DONGLE e o central: roda o keymap, conecta no PC por USB, leva o Studio.
-  # >>> TEMPORARIO: log USB no dongle pra diagnosticar o travamento na tecla
-  # &bootloader (o central e quem trava; o log dele mostra qual passo falha).
   - board: nice_nano//zmk
     shield: splitkb_dongle
-    snippet: zmk-usb-logging
+    snippet: studio-rpc-usb-uart
+    cmake-args: -DCONFIG_ZMK_STUDIO=y
 
   # As duas metades sao perifericas (sem Studio, sem USB pro host).
-  # >>> TEMPORARIO: log USB na ESQUERDA pra diagnosticar a tecla &bootloader
-  # (nao entra em bootloader / nao monta o NICENANO). Depois remover o snippet.
   - board: nice_nano//zmk
     shield: splitkb_left
-    snippet: zmk-usb-logging
   - board: nice_nano//zmk
     shield: splitkb_right

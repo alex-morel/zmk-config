@@ -146,12 +146,9 @@ endchoice
 config ZMK_DISPLAY_DEDICATED_THREAD_STACK_SIZE
     default 4096
 
-# Pool do LVGL: 16KB esgotava com a tela atual (animacao de boot com fonte 48
-# renderizando glifos grandes por frame + widgets de bateria + rotulo de
-# camada). Alocacao falhada do LVGL e SILENCIOSA sem LV_USE_LOG e rende
-# listras/lixo/corrupcao nao-deterministica. Ha folga de RAM (~60KB).
+# Pool do LVGL no valor de referencia (englmaxi usa 16KB; prospector 10KB).
 config LV_Z_MEM_POOL_SIZE
-    default 32768
+    default 16384
 
 endif # ZMK_DISPLAY
 
@@ -179,6 +176,14 @@ endchoice
 # no teste). Com o swap sai 0xF800 = vermelho certo.
 config LV_COLOR_16_SWAP
     default y
+
+# Refresh do LVGL a 50ms (20fps). Um frame CHEIO de 240x240x16bpp = 115KB =
+# ~115ms no SPI a 8MHz (fios dupont); o default de 33ms pede mais flushes do
+# que o barramento entrega e satura a fila do display. O prospector usa 20ms
+# porque roda SPI a 31MHz em PCB -- quando a tela for soldada e o SPI subir,
+# da pra baixar isto tambem.
+config LV_DEF_REFR_PERIOD
+    default 50
 
 endif # LVGL
 
