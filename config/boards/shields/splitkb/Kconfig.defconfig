@@ -185,6 +185,16 @@ config LV_COLOR_16_SWAP
 config LV_DEF_REFR_PERIOD
     default 50
 
+# REFRESH COMPLETO: toda atualizacao redesenha o frame inteiro desde (0,0).
+# Motivo: com updates PARCIAIS, um comando de janela (CASET/RASET) corrompido
+# pela SPI em dupont fazia o desenho aterrissar DESLOCADO e o erro acumulava
+# (sintoma: numero da camada "andando" a cada acionamento, deixando fantasma).
+# Com full refresh um frame corrompido se auto-corrige no seguinte. Custo:
+# ~115ms por update a 8MHz -- ok pra tela de status. Quando a tela for
+# SOLDADA (SPI confiavel a 30MHz+), da pra remover isto e voltar ao parcial.
+config LV_Z_FULL_REFRESH
+    default y
+
 endif # LVGL
 
 endif # dongle
