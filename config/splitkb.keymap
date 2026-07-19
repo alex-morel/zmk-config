@@ -43,5 +43,39 @@
                         &trans &trans &trans      &trans &trans          &trans &trans &trans &trans &trans
             >;
         };
+
+        /* 30 camadas RESERVADAS (total 32 = teto do ZMK, mascara uint32).
+         * Nao existem no firmware ate serem ativadas pelo ZMK Studio, onde
+         * aparecem como camadas extras pra criar/renomear/preencher. */
+        extra_01 { status = "reserved"; };
+        extra_02 { status = "reserved"; };
+        extra_03 { status = "reserved"; };
+        extra_04 { status = "reserved"; };
+        extra_05 { status = "reserved"; };
+        extra_06 { status = "reserved"; };
+        extra_07 { status = "reserved"; };
+        extra_08 { status = "reserved"; };
+        extra_09 { status = "reserved"; };
+        extra_10 { status = "reserved"; };
+        extra_11 { status = "reserved"; };
+        extra_12 { status = "reserved"; };
+        extra_13 { status = "reserved"; };
+        extra_14 { status = "reserved"; };
+        extra_15 { status = "reserved"; };
+        extra_16 { status = "reserved"; };
+        extra_17 { status = "reserved"; };
+        extra_18 { status = "reserved"; };
+        extra_19 { status = "reserved"; };
+        extra_20 { status = "reserved"; };
+        extra_21 { status = "reserved"; };
+        extra_22 { status = "reserved"; };
+        extra_23 { status = "reserved"; };
+        extra_24 { status = "reserved"; };
+        extra_25 { status = "reserved"; };
+        extra_26 { status = "reserved"; };
+        extra_27 { status = "reserved"; };
+        extra_28 { status = "reserved"; };
+        extra_29 { status = "reserved"; };
+        extra_30 { status = "reserved"; };
     };
 };
