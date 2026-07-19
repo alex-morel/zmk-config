@@ -177,23 +177,19 @@ endchoice
 config LV_COLOR_16_SWAP
     default y
 
-# Refresh do LVGL a 50ms (20fps). Um frame CHEIO de 240x240x16bpp = 115KB =
-# ~115ms no SPI a 8MHz (fios dupont); o default de 33ms pede mais flushes do
-# que o barramento entrega e satura a fila do display. O prospector usa 20ms
-# porque roda SPI a 31MHz em PCB -- quando a tela for soldada e o SPI subir,
-# da pra baixar isto tambem.
+# Refresh do LVGL a 20ms (50fps), igual ao prospector: tela soldada rodando
+# SPIM3 a 32MHz (frame cheio ~29ms, updates parciais bem menores). Historico:
+# ficou em 50ms na era dupont/8MHz porque 33ms pedia mais flushes do que o
+# barramento entregava e saturava a fila do display.
 config LV_DEF_REFR_PERIOD
-    default 50
+    default 20
 
-# REFRESH COMPLETO: toda atualizacao redesenha o frame inteiro desde (0,0).
-# Motivo: com updates PARCIAIS, um comando de janela (CASET/RASET) corrompido
-# pela SPI em dupont fazia o desenho aterrissar DESLOCADO e o erro acumulava
-# (sintoma: numero da camada "andando" a cada acionamento, deixando fantasma).
-# Com full refresh um frame corrompido se auto-corrige no seguinte. Custo:
-# ~115ms por update a 8MHz -- ok pra tela de status. Quando a tela for
-# SOLDADA (SPI confiavel a 30MHz+), da pra remover isto e voltar ao parcial.
-config LV_Z_FULL_REFRESH
-    default y
+# Refresh PARCIAL (default do LVGL). O LV_Z_FULL_REFRESH=y que viveu aqui era
+# MULETA da era dupont: comando de janela (CASET/RASET) corrompido pela SPI
+# fazia o desenho aterrissar deslocado e o erro acumulava (numero da camada
+# "andando"); o full refresh se auto-corrigia. Com a tela soldada a 32MHz o
+# barramento e confiavel -- se o sintoma de deslocamento VOLTAR um dia, a
+# muleta e: config LV_Z_FULL_REFRESH / default y (e conferir a solda).
 
 endif # LVGL
 
