@@ -193,8 +193,8 @@ ZMK_SUBSCRIPTION(dongle_periph_batt, zmk_peripheral_battery_state_changed);
  *
  * Nova sequencia, so com updates de area pequena (a caixa dos labels):
  *   1) "CAST IN THE NAME OF GOD" aparece centrado (quebrado em linhas), ~2s;
- *   2) a frase corre da direita pra esquerda e FREIA (ease-out) exatamente
- *      com o "YE NOT GUILTY" no centro da tela;
+ *   2) a frase corre da direita pra esquerda em velocidade CONSTANTE e para
+ *      exatamente com o "YE NOT GUILTY" no centro da tela;
  *   3) o "YE NOT GUILTY" PULSA no lugar (periodo 600ms, 4x, fade suave
  *      100%<->47% -- ritmo medido do GIF do anime);
  *   4) o overlay e ESCONDIDO de uma vez (um unico redraw de tela cheia),
@@ -202,7 +202,7 @@ ZMK_SUBSCRIPTION(dongle_periph_batt, zmk_peripheral_battery_state_changed);
  * O deslize so e viavel com a tela SOLDADA no SPIM3 a 32MHz (frame ~29ms);
  * na era dupont/8MHz isso saturava a fila do display e derrubava o dongle. */
 #define TICK_MS 30            /* passo do timer (~33fps no deslize) */
-#define SLIDE_MS 3000         /* duracao da corrida da frase */
+#define SLIDE_MS 5000         /* duracao da corrida da frase */
 #define PULSE_PERIOD 600      /* periodo de um pulso (ritmo do anime) */
 #define PULSE_COUNT 4
 #define PULSE_TOTAL (PULSE_PERIOD * PULSE_COUNT)
@@ -219,10 +219,8 @@ static void seq_timer_cb(lv_timer_t *t) {
     g_elapsed += TICK_MS;
 
     if (g_elapsed <= SLIDE_MS) {
-        /* ease-out cubico em inteiros: f = 1 - (1-t)^3, t e f em 0..1024 */
-        int32_t tt = 1024 - (int32_t)g_elapsed * 1024 / SLIDE_MS;
-        int32_t f = 1024 - ((tt * tt >> 10) * tt >> 10);
-        int x = g_x_start + (int)(((int64_t)(g_x_end - g_x_start) * f) >> 10);
+        /* deslize LINEAR: velocidade constante do inicio ao fim */
+        int x = g_x_start + (int)((int64_t)(g_x_end - g_x_start) * g_elapsed / SLIDE_MS);
         lv_obj_align(g_cast, LV_ALIGN_LEFT_MID, x, 0);
         return;
     }
