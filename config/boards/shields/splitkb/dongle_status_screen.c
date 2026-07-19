@@ -445,8 +445,11 @@ static void host_update_cb(struct host_state s) {
         verdict_start("WE HAVE COME TO TERMS", VERDICT_STATIC);
         return;
     }
-    if (g_host_waiting && g_verdict_timer == NULL) {
-        /* slot vazio anunciando e nada na tela (ex.: host sumiu do nada) */
+    if (g_host_waiting && s.open && !old.open) {
+        /* o bond do perfil acabou de ser LIMPO (BT_CLR) -> volta a anunciar.
+         * De proposito NAO cobre "ja estava vazio desde o boot": o NEGOTIATOR
+         * so aparece por acao do usuario (selecionar slot vazio ou limpar),
+         * senao ele tomava a tela assim que o dongle ligava. */
         verdict_start("THE NEGOTIATOR", VERDICT_WAIT);
         return;
     }
