@@ -6,6 +6,14 @@ include:
   - board: nice_nano//zmk
     shield: jstest
 
+  # Limpa TODOS os settings (pareamento/bonds inclusive). Gravar quando uma
+  # placa for trocada: a split casa por endereco BLE unico do chip, entao
+  # metade pareada com dongle antigo NUNCA aceita o novo (ela faz advertising
+  # DIRECIONADO pro endereco velho). Gravar isto -> ligar 1x -> regravar o
+  # firmware normal.
+  - board: nice_nano//zmk
+    shield: settings_reset
+
   # --- Teclado split com DONGLE ---
   # O DONGLE e o central: roda o keymap, conecta no PC por USB, leva o Studio.
   # >>> TEMPORARIO: log USB (DEFERRED, sem immediate!) pra cacar a degradacao
