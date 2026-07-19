@@ -22,10 +22,11 @@
 
 #include <zmk/display.h>
 #include <zmk/display/status_screen.h>
-#include <zmk/display/widgets/layer_status.h>
 #include <zmk/display/widgets/output_status.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/battery_state_changed.h>
+#include <zmk/events/layer_state_changed.h>
+#include <zmk/keymap.h>
 
 /* O ZMK amarra DUAS coisas na mesma flag:
  *   target_sources_ifdef(CONFIG_ZMK_BATTERY_REPORTING ... events/battery_state_changed.c)
@@ -40,8 +41,29 @@ LV_FONT_DECLARE(bigzero);
 
 ZMK_EVENT_IMPL(zmk_peripheral_battery_state_changed);
 
-static struct zmk_widget_layer_status layer_status_widget;
 static struct zmk_widget_output_status output_status_widget;
+
+/* ---------- CAMADA (rotulo proprio, nao o widget do ZMK) ----------
+ * Motivo: o widget do ZMK usa LV_SIZE_CONTENT e RE-DIMENSIONA quando o texto
+ * muda; no LVGL isso deixa residuo da area antiga -> era o glitch visual a
+ * cada troca de camada. Aqui o rotulo tem TAMANHO FIXO e texto centralizado,
+ * entao a area invalidada e sempre a mesma e nao sobra lixo. De quebra, com
+ * caixa fixa da pra usar fonte grande sem transbordar. */
+static lv_obj_t *g_layer_lbl;
+
+struct layer_state {
+    uint8_t index;
+};
+static struct layer_state layer_get_state(const zmk_event_t *eh) {
+    return (struct layer_state){.index = zmk_keymap_highest_layer_active()};
+}
+static void layer_update_cb(struct layer_state s) {
+    if (g_layer_lbl != NULL) {
+        lv_label_set_text_fmt(g_layer_lbl, "%d", s.index);
+    }
+}
+ZMK_DISPLAY_WIDGET_LISTENER(dongle_layer, struct layer_state, layer_update_cb, layer_get_state)
+ZMK_SUBSCRIPTION(dongle_layer, zmk_layer_state_changed);
 
 /* ---------- bateria das METADES (perifericos) ----------
  * O central recebe zmk_peripheral_battery_state_changed com .source = indice
@@ -261,12 +283,15 @@ lv_obj_t *zmk_display_status_screen() {
                                 lv_color_white(), LV_PART_MAIN);
     lv_obj_align(zmk_widget_output_status_obj(&output_status_widget), LV_ALIGN_BOTTOM_MID, 0, -88);
 
-    /* camada atual no centro. Fonte PADRAO (16): a 48 o texto transbordava a
-     * caixa do widget e gerava scrollbar (a listra que sobrava). */
-    zmk_widget_layer_status_init(&layer_status_widget, screen);
-    lv_obj_set_style_text_color(zmk_widget_layer_status_obj(&layer_status_widget),
-                                lv_color_white(), LV_PART_MAIN);
-    lv_obj_align(zmk_widget_layer_status_obj(&layer_status_widget), LV_ALIGN_CENTER, 0, 0);
+    /* camada atual no centro, caixa FIXA (sem redimensionar = sem glitch) */
+    g_layer_lbl = lv_label_create(screen);
+    lv_obj_set_size(g_layer_lbl, 120, 64);
+    lv_obj_set_style_text_align(g_layer_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_set_style_text_color(g_layer_lbl, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(g_layer_lbl, &lv_font_montserrat_48, LV_PART_MAIN);
+    lv_label_set_text(g_layer_lbl, "0");
+    lv_obj_align(g_layer_lbl, LV_ALIGN_CENTER, 0, 0);
+    dongle_layer_init();
 
     /* bateria das duas metades, lado a lado na parte de baixo */
     batt_create(screen, 0, -38);

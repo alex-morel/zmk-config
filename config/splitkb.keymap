@@ -37,7 +37,8 @@
         scroll_layer {
             bindings = <
    &studio_unlock &trans &trans &trans &trans &trans     &trans &trans   &kp UP   &trans    &trans &trans
-   &trans &trans &trans &trans &trans &trans     &trans &kp LEFT &kp DOWN &kp RIGHT &trans &trans
+// fileira de casa esquerda: botoes do mouse (MB3=meio, MB1=esquerdo, MB2=direito)
+   &trans &trans &trans &mkp MB3 &mkp MB1 &mkp MB2     &trans &kp LEFT &kp DOWN &kp RIGHT &trans &trans
    &bootloader &trans &trans &trans &trans &trans     &trans &trans   &trans   &trans    &trans &bootloader
                         &trans &trans &trans      &trans &trans          &trans &trans &trans &trans &trans
             >;
