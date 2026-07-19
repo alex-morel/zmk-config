@@ -16,12 +16,12 @@ include:
 
   # --- Teclado split com DONGLE ---
   # O DONGLE e o central: roda o keymap, conecta no PC por USB, leva o Studio.
-  # >>> TEMPORARIO: log USB (DEFERRED, sem immediate!) pra cacar a degradacao
-  # com o tempo (suspeita: pool LVGL esgotando aos poucos). Nivel do LVGL ja e
-  # WARN por default -> so alocacao falhada/erro aparece. Depois volta studio.
+  # (Pra debugar: trocar o snippet por zmk-usb-logging -- log DEFERRED; nunca
+  # LOG_MODE_IMMEDIATE nem LV_USE_LOG, que travam o boot.)
   - board: nice_nano//zmk
     shield: splitkb_dongle
-    snippet: zmk-usb-logging
+    snippet: studio-rpc-usb-uart
+    cmake-args: -DCONFIG_ZMK_STUDIO=y
 
   # As duas metades sao perifericas (sem Studio, sem USB pro host).
   - board: nice_nano//zmk
