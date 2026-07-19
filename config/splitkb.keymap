@@ -63,8 +63,9 @@
 
         scroll_layer {
             bindings = <
-// Q/W/E = host: USB, BT perfil 0, BT perfil 1
-   &studio_unlock &host_usb &host_bt0 &host_bt1 &trans &trans     &trans &trans   &kp UP   &trans    &trans &trans
+// Q/W/E = host: USB, BT perfil 0, BT perfil 1; R = BT_CLR (esquece o host do
+// perfil ATIVO -- pro slot voltar a anunciar aberto; nao afeta as metades)
+   &studio_unlock &host_usb &host_bt0 &host_bt1 &bt BT_CLR &trans     &trans &trans   &kp UP   &trans    &trans &trans
 // fileira de casa esquerda: botoes do mouse (MB3=meio, MB1=esquerdo, MB2=direito)
    &trans &trans &trans &mkp MB3 &mkp MB1 &mkp MB2     &trans &kp LEFT &kp DOWN &kp RIGHT &trans &trans
    &bootloader &trans &trans &trans &trans &trans     &trans &trans   &trans   &trans    &trans &bootloader
