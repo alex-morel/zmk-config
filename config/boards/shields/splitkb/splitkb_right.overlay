@@ -49,7 +49,7 @@
              * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
              * renomeia o evento (X/Y -> wheel), nao reescala nada. */
             scale-multiplier = <1>;
-            scale-divisor = <280>;
+            scale-divisor = <600>;    /* 70 (cursor) -> 280 -> ainda rapido -> 600 */
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_Y>;
             invert;                   /* cima<->baixo invertido (eixo vertical) */
@@ -64,7 +64,7 @@
              * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
              * renomeia o evento (X/Y -> wheel), nao reescala nada. */
             scale-multiplier = <1>;
-            scale-divisor = <280>;
+            scale-divisor = <600>;    /* 70 (cursor) -> 280 -> ainda rapido -> 600 */
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_X>;
         };
