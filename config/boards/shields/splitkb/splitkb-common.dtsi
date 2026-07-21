@@ -82,11 +82,11 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
         compatible = "zmk,input-listener";
         device = <&jsr_split>;
         status = "disabled";
-
-        scroller {
-            layers = <1>;      // layer 1 -> joystick direito vira scroll
-            input-processors = <&zip_xy_to_scroll_mapper>;
-        };
+        /* SCROLL FIXO, sem depender de camada -- processor no nivel base
+         * do listener (nao num filho com "layers") roda em toda entrada,
+         * incondicionalmente. Design antigo (troca por camada) documentado
+         * errado na memoria do projeto; nunca foi a intencao real. */
+        input-processors = <&zip_xy_to_scroll_mapper>;
     };
 
     jsl_listener: jsl_listener {
