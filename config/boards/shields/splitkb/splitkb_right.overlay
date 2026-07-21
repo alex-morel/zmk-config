@@ -20,8 +20,16 @@
 / {
     /*
      * Joystick DIREITO (periférica). Alimenta o input-split -> vai pro central.
-     * Papel: cursor por padrão; na layer 1 vira scroll (definido no listener,
-     * no lado central). Centros iguais ao esquerdo por ora — calibrar depois.
+     * Papel: SCROLL fixo (definido no listener, no lado central).
+     *
+     * CALIBRADO em 2026-07-21 com log bruto (splitkb_right.conf temporario +
+     * snippet zmk-usb-logging): repouso e extremos medidos por eixo.
+     *   x-ch (AIN2, vira INPUT_REL_Y): centro medido 1661mV -- praticamente
+     *     igual ao valor generico (1660), sem drift real. Mantido.
+     *   y-ch (AIN3, vira INPUT_REL_X): centro medido 1240mV contra o generico
+     *     de 1710mV -- ~470mV de erro, a causa do "puxando pro lado". Raio
+     *     medido ~1100-1160mV (bem menor que o generico 1600), ajustado pra
+     *     nao saturar antes do fim do curso fisico.
      */
     anin_right: analog_input_right {
         compatible = "zmk,analog-input";
@@ -29,7 +37,7 @@
 
         x-ch {
             io-channels = <&adc 2>;
-            mv-mid = <1660>;
+            mv-mid = <1661>;
             mv-min-max = <1600>;
             mv-deadzone = <30>;
             scale-multiplier = <1>;
@@ -40,8 +48,8 @@
         };
         y-ch {
             io-channels = <&adc 3>;
-            mv-mid = <1710>;
-            mv-min-max = <1600>;
+            mv-mid = <1240>;
+            mv-min-max = <1100>;
             mv-deadzone = <30>;
             scale-multiplier = <1>;
             scale-divisor = <70>;

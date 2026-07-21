@@ -26,9 +26,5 @@ include:
   # As duas metades sao perifericas (sem Studio, sem USB pro host).
   - board: nice_nano//zmk
     shield: splitkb_left
-  # >>> TEMPORARIO (calibracao do joystick direito, 2026-07-20): snippet de
-  # log USB + debug bruto do ADC (flags extras em splitkb_right.conf). Depois
-  # de calibrar: tirar o snippet daqui e apagar splitkb_right.conf.
   - board: nice_nano//zmk
     shield: splitkb_right
-    snippet: zmk-usb-logging
