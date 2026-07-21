@@ -40,8 +40,11 @@
             mv-mid = <1661>;
             mv-min-max = <1600>;
             mv-deadzone = <30>;
+            /* divisor 70 era calibrado pra CURSOR (pixel); scroll com o
+             * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
+             * renomeia o evento (X/Y -> wheel), nao reescala nada. */
             scale-multiplier = <1>;
-            scale-divisor = <70>;
+            scale-divisor = <280>;
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_Y>;
             invert;                   /* cima<->baixo invertido (eixo vertical) */
@@ -51,8 +54,11 @@
             mv-mid = <1240>;
             mv-min-max = <1100>;
             mv-deadzone = <30>;
+            /* divisor 70 era calibrado pra CURSOR (pixel); scroll com o
+             * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
+             * renomeia o evento (X/Y -> wheel), nao reescala nada. */
             scale-multiplier = <1>;
-            scale-divisor = <70>;
+            scale-divisor = <280>;
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_X>;
         };
