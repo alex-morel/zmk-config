@@ -22,14 +22,19 @@
      * Joystick DIREITO (periférica). Alimenta o input-split -> vai pro central.
      * Papel: SCROLL fixo (definido no listener, no lado central).
      *
-     * CALIBRADO em 2026-07-21 com log bruto (splitkb_right.conf temporario +
-     * snippet zmk-usb-logging): repouso e extremos medidos por eixo.
-     *   x-ch (AIN2, vira INPUT_REL_Y): centro medido 1661mV -- praticamente
-     *     igual ao valor generico (1660), sem drift real. Mantido.
-     *   y-ch (AIN3, vira INPUT_REL_X): centro medido 1240mV contra o generico
-     *     de 1710mV -- ~470mV de erro, a causa do "puxando pro lado". Raio
-     *     medido ~1100-1160mV (bem menor que o generico 1600), ajustado pra
-     *     nao saturar antes do fim do curso fisico.
+     * RECALIBRADO em 2026-07-21 (2a sessao, log bruto) com log bruto
+     * (splitkb_right.conf temporario + snippet zmk-usb-logging).
+     *   x-ch (AIN2, vira INPUT_REL_Y): centro 1658mV, desvio-padrao em
+     *     repouso so 5.2mV -- estavel, quase igual a 1a calibracao (1661).
+     *     Fio saudavel.
+     *   y-ch (AIN3, vira INPUT_REL_X): centro 1727mV -- MUITO diferente da
+     *     1a calibracao (1240mV, sessao anterior) e com desvio-padrao em
+     *     repouso de 141.5mV (contra 5.2 do outro eixo). Isso NAO e deriva
+     *     normal: e a assinatura de mau contato/fio solto na protoboard
+     *     nesse fio especifico. Deadzone subiu de 30 pra 150 pra filtrar o
+     *     ruido observado. SE O CENTRO VOLTAR A MUDAR numa proxima sessao,
+     *     o fio desse canal precisa de reparo fisico (reencostar/soldar),
+     *     recalibrar sozinho nao resolve um mau contato.
      */
     anin_right: analog_input_right {
         compatible = "zmk,analog-input";
@@ -37,7 +42,7 @@
 
         x-ch {
             io-channels = <&adc 2>;
-            mv-mid = <1661>;
+            mv-mid = <1658>;
             mv-min-max = <1600>;
             mv-deadzone = <30>;
             /* divisor 70 era calibrado pra CURSOR (pixel); scroll com o
@@ -51,9 +56,10 @@
         };
         y-ch {
             io-channels = <&adc 3>;
-            mv-mid = <1240>;
-            mv-min-max = <1100>;
-            mv-deadzone = <30>;
+            mv-mid = <1727>;
+            mv-min-max = <1600>;
+            mv-deadzone = <150>;      /* subiu de 30: ruido de repouso deste
+                                        * canal mede ~141mV (ver nota acima) */
             /* divisor 70 era calibrado pra CURSOR (pixel); scroll com o
              * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
              * renomeia o evento (X/Y -> wheel), nao reescala nada. */
