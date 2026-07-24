@@ -5,20 +5,31 @@
 #include <dt-bindings/zmk/bt.h>
 
 /*
- * KEYMAP PLACEHOLDER — customize à vontade.
+ * KEYMAP — 4 camadas ativas + 28 reservadas pro ZMK Studio.
  * Ordem das teclas segue o transform (ver splitkb.dtsi):
- *   3 fileiras principais de 6 (por lado) + fileira 3:
- *     [polegar0 polegar1 polegar2  índice-extra-C3  índice-extra-C4]
+ *   3 fileiras principais de 6 (por lado) + fileira 3 (polegares):
+ *     [pol-interno pol1 pol2  índice-extra-C3  índice-extra-C4]
  *
- * Layer 1 (SCROLL): mantida com &mo 1 num polegar. Nessa layer o joystick
- * DIREITO vira scroll automaticamente (config no input-listener do .dtsi).
+ * ACESSO AS CAMADAS (mockup em keymap-mockup/, 2026-07-23):
+ *   SYM (numeros/simbolos) = segura o polegar ESQUERDO interno (&mo 2)
+ *   NAV (setas/mouse/host) = segura o polegar DIREITO interno (&mo 1)
+ *   FUN (F1-F12)           = segura NAV e, com ele segurado, segura
+ *                             TAMBEM a tecla que e SYM na base (&mo 3
+ *                             definido DENTRO da nav_layer)
  *
- * &bootloader (layer 1, cantos inferiores externos): poe a placa em modo UF2
- * pra atualizar o firmware sem precisar do reset duplo -- o board nao tem
- * botoes. Tem UM EM CADA LADO de proposito: a behavior de reset e
+ * Cliques de mouse (MB3/MB1/MB2) moraram nas thumb keys esquerdas dentro
+ * da nav_layer -- ficam livres porque o polegar direito esta ocupado
+ * segurando NAV.
+ *
+ * &bootloader (nav_layer, cantos inferiores externos): poe a placa em modo
+ * UF2 pra atualizar o firmware sem precisar do reset duplo -- o board nao
+ * tem botoes. Tem UM EM CADA LADO de proposito: a behavior de reset e
  * BEHAVIOR_LOCALITY_EVENT_SOURCE, ou seja, roda na metade onde a tecla foi
  * apertada, e nao na central. Canto esquerdo = flasheia o esquerdo; canto
  * direito = flasheia o direito. Cabo USB tem que estar no lado alvo.
+ *
+ * Studio unlock REMOVIDO (2026-07-23): CONFIG_ZMK_STUDIO_LOCKING=n ja
+ * deixa o Studio sempre destravado, a tecla nunca teve efeito nenhum.
  */
 
 / {
@@ -57,23 +68,45 @@
    &kp LCTRL &kp A &kp S &kp D &kp F &kp G       &kp H &kp J &kp K    &kp L   &kp SEMI &kp SQT
    &kp LSHFT &kp Z &kp X &kp C &kp V &kp B       &kp N &kp M &kp COMMA &kp DOT &kp FSLH &kp ESC
 //  └─────┴─────┴─────┼─────┼─────┼─────┤     ├─────┼─────┼─────┼─────┼─────┴─────┘
-                  &mo 1 &kp SPACE &kp LGUI  &kp LALT &kp LCTRL       &mo 1 &kp RET &kp RALT  &kp BSPC &kp DEL
+                  &mo 2 &kp SPACE &kp LGUI  &kp LALT &kp LCTRL       &mo 1 &kp RET &kp RALT  &kp BSPC &kp DEL
+//                 SYM                                                NAV
             >;
         };
 
-        scroll_layer {
+        nav_layer {
             bindings = <
 // Q/W/E = host: USB, BT perfil 0, BT perfil 1; R = BT_CLR (esquece o host do
 // perfil ATIVO -- pro slot voltar a anunciar aberto; nao afeta as metades)
-   &studio_unlock &host_usb &host_bt0 &host_bt1 &bt BT_CLR &trans     &trans &trans   &kp UP   &trans    &trans &trans
-// fileira de casa esquerda: botoes do mouse (MB3=meio, MB1=esquerdo, MB2=direito)
-   &trans &trans &trans &mkp MB3 &mkp MB1 &mkp MB2     &trans &kp LEFT &kp DOWN &kp RIGHT &trans &trans
-   &bootloader &trans &trans &trans &trans &trans     &trans &trans   &trans   &trans    &trans &bootloader
-                        &trans &trans &trans      &trans &trans          &trans &trans &trans &trans &trans
+   &trans &host_usb &host_bt0 &host_bt1 &bt BT_CLR &trans     &trans &kp HOME &kp UP   &kp END        &trans &trans
+   &trans &trans    &trans    &trans    &trans     &trans     &trans &kp LEFT &kp DOWN &kp RIGHT      &trans &trans
+   &bootloader &trans &trans &trans &trans &trans     &trans &kp PG_DN &kp LC(LS(TAB)) &kp LC(TAB) &kp PG_UP &bootloader
+// polegar esquerdo: FUN (aninhado) + cliques do mouse (MB3=meio,MB1=esq,MB2=dir)
+                &mo 3 &mkp MB3 &mkp MB1 &mkp MB2 &trans       &trans &trans &trans &trans &trans
+//               FUN                                           NAV (self)
             >;
         };
 
-        /* 30 camadas RESERVADAS (total 32 = teto do ZMK, mascara uint32).
+        sym_layer {
+            bindings = <
+   &kp GRAVE &kp N1   &kp N2  &kp N3   &kp N4    &kp N5        &kp N6    &kp N7   &kp N8    &kp N9  &kp N0   &trans
+   &kp TILDE &kp EXCL &kp AT  &kp HASH &kp DOLLAR &kp PERCENT   &kp CARET &kp AMPS &kp ASTRK &kp LPAR &kp RPAR &kp MINUS
+   &trans    &kp LBKT &kp RBKT &kp LBRC &kp RBRC &kp BSLH       &kp PIPE  &kp SEMI &kp COLON &kp EQUAL &kp PLUS &kp UNDER
+                    &trans &trans &trans &trans &trans            &trans &trans &trans &trans &trans
+//                   SYM (self)
+            >;
+        };
+
+        fun_layer {
+            bindings = <
+   &kp F1 &kp F2 &kp F3 &kp F4 &kp F5 &kp F6       &kp F7 &kp F8 &kp F9 &kp F10 &kp F11 &kp F12
+   &trans &trans &trans &trans &trans &trans       &trans &trans &trans &trans  &trans  &trans
+   &trans &trans &trans &trans &trans &trans       &trans &trans &trans &trans  &trans  &trans
+                 &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans
+//                FUN (self)                          NAV (segurada junto)
+            >;
+        };
+
+        /* 28 camadas RESERVADAS (total 32 = teto do ZMK, mascara uint32).
          * Nao existem no firmware ate serem ativadas pelo ZMK Studio, onde
          * aparecem como camadas extras pra criar/renomear/preencher. */
         extra_01 { status = "reserved"; };
@@ -104,7 +137,5 @@
         extra_26 { status = "reserved"; };
         extra_27 { status = "reserved"; };
         extra_28 { status = "reserved"; };
-        extra_29 { status = "reserved"; };
-        extra_30 { status = "reserved"; };
     };
 };
