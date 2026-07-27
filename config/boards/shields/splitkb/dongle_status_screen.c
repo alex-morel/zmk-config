@@ -71,8 +71,14 @@ static struct zmk_widget_output_status output_status_widget;
  * Motivo: o widget do ZMK usa LV_SIZE_CONTENT e RE-DIMENSIONA quando o texto
  * muda; no LVGL isso deixa residuo da area antiga -> era o glitch visual a
  * cada troca de camada. Aqui o rotulo tem TAMANHO FIXO e texto centralizado,
- * entao a area invalidada e sempre a mesma e nao sobra lixo. De quebra, com
- * caixa fixa da pra usar fonte grande sem transbordar. */
+ * entao a area invalidada e sempre a mesma e nao sobra lixo.
+ *
+ * Mostra o NOME da camada (display-name no keymap.keymap), nao o numero --
+ * zmk_keymap_highest_layer_active() devolve um INDICE (posicao na ordem),
+ * que precisa ser convertido pro ID estavel antes de buscar o nome
+ * (zmk_keymap_layer_index_to_id -> zmk_keymap_layer_name). Camada sem
+ * display-name definido (as reservadas extra_XX) cai no numero como
+ * fallback, pra nunca ficar em branco. */
 static lv_obj_t *g_layer_lbl;
 
 struct layer_state {
@@ -82,7 +88,14 @@ static struct layer_state layer_get_state(const zmk_event_t *eh) {
     return (struct layer_state){.index = zmk_keymap_highest_layer_active()};
 }
 static void layer_update_cb(struct layer_state s) {
-    if (g_layer_lbl != NULL) {
+    if (g_layer_lbl == NULL) {
+        return;
+    }
+    zmk_keymap_layer_id_t id = zmk_keymap_layer_index_to_id(s.index);
+    const char *name = zmk_keymap_layer_name(id);
+    if (name != NULL && name[0] != '\0') {
+        lv_label_set_text(g_layer_lbl, name);
+    } else {
         lv_label_set_text_fmt(g_layer_lbl, "%d", s.index);
     }
 }
@@ -495,13 +508,17 @@ lv_obj_t *zmk_display_status_screen() {
                                 lv_color_white(), LV_PART_MAIN);
     lv_obj_align(zmk_widget_output_status_obj(&output_status_widget), LV_ALIGN_BOTTOM_MID, 0, -88);
 
-    /* camada atual no centro, caixa FIXA (sem redimensionar = sem glitch) */
+    /* camada atual no centro, caixa FIXA (sem redimensionar = sem glitch).
+     * Mostra o NOME agora, nao so um digito -- caixa mais larga e fonte
+     * menor (28 em vez de 48) pra "BASE"/"NAV"/"SYM"/"FUN" (ou qualquer
+     * nome que o Studio venha a por numa camada extra) caberem sem cortar. */
     g_layer_lbl = lv_label_create(screen);
-    lv_obj_set_size(g_layer_lbl, 120, 64);
+    lv_obj_set_size(g_layer_lbl, 200, 64);
     lv_obj_set_style_text_align(g_layer_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_set_style_text_color(g_layer_lbl, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_text_font(g_layer_lbl, &lv_font_montserrat_48, LV_PART_MAIN);
-    lv_label_set_text(g_layer_lbl, "0");
+    lv_obj_set_style_text_font(g_layer_lbl, &lv_font_montserrat_28, LV_PART_MAIN);
+    lv_label_set_long_mode(g_layer_lbl, LV_LABEL_LONG_CLIP);
+    lv_label_set_text(g_layer_lbl, "BASE");
     lv_obj_align(g_layer_lbl, LV_ALIGN_CENTER, 0, 0);
     dongle_layer_init();
 
