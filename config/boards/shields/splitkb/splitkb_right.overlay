@@ -44,7 +44,7 @@
          * do que uma roda de mouse manual produz. Com menos eventos/seg,
          * o divisor pode voltar pra um valor moderado (cada clique
          * significativo, mas bem mais espacado no tempo). */
-        sampling-hz = <20>;
+        sampling-hz = <10>;
 
         x-ch {
             io-channels = <&adc 2>;
