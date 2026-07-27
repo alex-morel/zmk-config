@@ -5,7 +5,7 @@
 #include <dt-bindings/zmk/bt.h>
 
 /*
- * KEYMAP — 4 camadas ativas + 28 reservadas pro ZMK Studio.
+ * KEYMAP — 5 camadas ativas + 27 reservadas pro ZMK Studio.
  * Ordem das teclas segue o transform (ver splitkb.dtsi):
  *   3 fileiras principais de 6 (por lado) + fileira 3 (polegares):
  *     [pol-interno pol1 pol2  índice-extra-C3  índice-extra-C4]
@@ -16,6 +16,9 @@
  *   FUN (F1-F12)           = segura NAV e, com ele segurado, segura
  *                             TAMBEM a tecla que e SYM na base (&mo 3
  *                             definido DENTRO da nav_layer)
+ *   EDIT (atalhos gerais + VS Code, 2026-07-27) = segura SYM e, com ele
+ *                             segurado, segura TAMBEM a tecla que e NAV
+ *                             na base (&mo 4 definido DENTRO da sym_layer)
  *
  * Cliques de mouse (MB3/MB1/MB2) moraram nas thumb keys esquerdas dentro
  * da nav_layer -- ficam livres porque o polegar direito esta ocupado
@@ -94,8 +97,22 @@
    &kp GRAVE &kp N1   &kp N2  &kp N3   &kp N4    &kp N5        &kp N6    &kp N7   &kp N8    &kp N9  &kp N0   &trans
    &kp TILDE &kp EXCL &kp AT  &kp HASH &kp DOLLAR &kp PERCENT   &kp CARET &kp AMPS &kp ASTRK &kp LPAR &kp RPAR &kp MINUS
    &trans    &kp LBKT &kp RBKT &kp LBRC &kp RBRC &kp BSLH       &kp PIPE  &kp SEMI &kp COLON &kp EQUAL &kp PLUS &kp UNDER
-                    &trans &trans &trans &trans &trans            &trans &trans &trans &trans &trans
-//                   SYM (self)
+// polegar direito: EDIT aninhado (segura SYM, dai segura essa tecla tambem)
+                    &trans &trans &trans &trans &trans            &mo 4  &trans &trans &trans &trans
+//                   SYM (self)                                    EDIT
+            >;
+        };
+
+        edit_layer {
+            display-name = "EDIT";
+            bindings = <
+// geral (esquerda) / arquivo-janela (direita)
+   &kp LC(C)    &kp LC(X)      &kp LC(V) &kp LC(Z)       &kp LC(LS(Z)) &kp LC(A)       &kp LC(S) &kp LC(F) &kp LC(N) &kp LC(W) &trans &trans
+// VS Code: comentar, paleta, quick-open, terminal, formatar, renomear | duplicar linha, mover linha, excluir linha, multi-cursor, sidebar
+   &kp LC(FSLH) &kp LC(LS(P))  &kp LC(P) &kp LC(GRAVE)   &kp LS(LA(F)) &kp F2          &kp LS(LA(DOWN)) &kp LA(UP) &kp LA(DOWN) &kp LC(LS(K)) &kp LC(LA(DOWN)) &kp LC(B)
+   &trans &trans &trans &trans &trans &trans       &trans &trans &trans &trans &trans &trans
+                 &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans
+//                SYM (segurada junto)                  EDIT (self)
             >;
         };
 
@@ -110,7 +127,7 @@
             >;
         };
 
-        /* 28 camadas RESERVADAS (total 32 = teto do ZMK, mascara uint32).
+        /* 27 camadas RESERVADAS (total 32 = teto do ZMK, mascara uint32).
          * Nao existem no firmware ate serem ativadas pelo ZMK Studio, onde
          * aparecem como camadas extras pra criar/renomear/preencher. */
         extra_01 { status = "reserved"; };
@@ -140,6 +157,5 @@
         extra_25 { status = "reserved"; };
         extra_26 { status = "reserved"; };
         extra_27 { status = "reserved"; };
-        extra_28 { status = "reserved"; };
     };
 };
