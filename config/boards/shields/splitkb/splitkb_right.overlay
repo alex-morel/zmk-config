@@ -48,15 +48,9 @@
             /* divisor 70 era calibrado pra CURSOR (pixel); scroll com o
              * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
              * renomeia o evento (X/Y -> wheel), nao reescala nada. */
-            /* Os pedidos de reducao 1200->3600->12000 (2026-07-27) eram pra
-             * ESTE lado (foram aplicados por engano na esquerda a principio).
-             * mv-min-max=1600: divisor >= 1600 trunca a divisao inteira pra
-             * SEMPRE zero (sem movimento nenhum, nao so "bem devagar") --
-             * 12000 deixaria o joystick morto. Foi pra 12000 mesmo assim,
-             * a pedido explicito -- se travar, o conserto e baixar pra algo
-             * abaixo de 1600 (ex.: 1500). */
+            /* Valor confirmado bom (2026-07-27). */
             scale-multiplier = <1>;
-            scale-divisor = <12000>;
+            scale-divisor = <1200>;
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_Y>;
             invert;                   /* cima<->baixo invertido (eixo vertical) */
@@ -70,15 +64,9 @@
             /* divisor 70 era calibrado pra CURSOR (pixel); scroll com o
              * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
              * renomeia o evento (X/Y -> wheel), nao reescala nada. */
-            /* Os pedidos de reducao 1200->3600->12000 (2026-07-27) eram pra
-             * ESTE lado (foram aplicados por engano na esquerda a principio).
-             * mv-min-max=1600: divisor >= 1600 trunca a divisao inteira pra
-             * SEMPRE zero (sem movimento nenhum, nao so "bem devagar") --
-             * 12000 deixaria o joystick morto. Foi pra 12000 mesmo assim,
-             * a pedido explicito -- se travar, o conserto e baixar pra algo
-             * abaixo de 1600 (ex.: 1500). */
+            /* Valor confirmado bom (2026-07-27). */
             scale-multiplier = <1>;
-            scale-divisor = <12000>;
+            scale-divisor = <1200>;
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_X>;
         };
