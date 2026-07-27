@@ -38,7 +38,13 @@
      */
     anin_right: analog_input_right {
         compatible = "zmk,analog-input";
-        sampling-hz = <100>;
+        /* 100 -> 20 (2026-07-27): o problema pode ser QUANTIDADE de
+         * eventos de scroll por segundo, nao so o tamanho de cada um --
+         * a 100Hz sao ate 100 "cliques" de roda por segundo, bem acima
+         * do que uma roda de mouse manual produz. Com menos eventos/seg,
+         * o divisor pode voltar pra um valor moderado (cada clique
+         * significativo, mas bem mais espacado no tempo). */
+        sampling-hz = <20>;
 
         x-ch {
             io-channels = <&adc 2>;
@@ -48,10 +54,11 @@
             /* divisor 70 era calibrado pra CURSOR (pixel); scroll com o
              * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
              * renomeia o evento (X/Y -> wheel), nao reescala nada. */
-            /* 1200 -> 1500 (2026-07-27). Perto do teto de mv-min-max=1600
-             * -- so produz movimento perto do fim do curso fisico. */
+            /* 1200 -> 1500 -> 200 (2026-07-27): a frequencia (sampling-hz
+             * acima) virou o freio principal; o divisor volta pra um
+             * valor moderado, cada evento com magnitude real de novo. */
             scale-multiplier = <1>;
-            scale-divisor = <1500>;
+            scale-divisor = <200>;
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_Y>;
             invert;                   /* cima<->baixo invertido (eixo vertical) */
@@ -65,10 +72,11 @@
             /* divisor 70 era calibrado pra CURSOR (pixel); scroll com o
              * mesmo numero fica disparado -- zip_xy_to_scroll_mapper so
              * renomeia o evento (X/Y -> wheel), nao reescala nada. */
-            /* 1200 -> 1500 (2026-07-27). Perto do teto de mv-min-max=1600
-             * -- so produz movimento perto do fim do curso fisico. */
+            /* 1200 -> 1500 -> 200 (2026-07-27): a frequencia (sampling-hz
+             * acima) virou o freio principal; o divisor volta pra um
+             * valor moderado, cada evento com magnitude real de novo. */
             scale-multiplier = <1>;
-            scale-divisor = <1500>;
+            scale-divisor = <200>;
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_X>;
         };
