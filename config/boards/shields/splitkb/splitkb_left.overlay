@@ -30,8 +30,10 @@
             mv-mid = <1660>;        /* calibrado no teste */
             mv-min-max = <1600>;
             mv-deadzone = <30>;
+            /* 70 era o valor original (nunca ajustado); reduzido bastante
+             * a pedido -- cursor fica bem mais lento/controlavel. */
             scale-multiplier = <1>;
-            scale-divisor = <70>;
+            scale-divisor = <300>;
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_Y>;
             invert;                   /* cima<->baixo invertido (eixo vertical) */
@@ -41,8 +43,10 @@
             mv-mid = <1710>;
             mv-min-max = <1600>;
             mv-deadzone = <30>;
+            /* 70 era o valor original (nunca ajustado); reduzido bastante
+             * a pedido -- cursor fica bem mais lento/controlavel. */
             scale-multiplier = <1>;
-            scale-divisor = <70>;
+            scale-divisor = <300>;
             evt-type = <INPUT_EV_REL>;
             input-code = <INPUT_REL_X>;
         };
