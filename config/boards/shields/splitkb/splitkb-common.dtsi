@@ -78,21 +78,67 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
      * o HID de mouse. Ficam disabled aqui; o dongle habilita os dois.
      * Nas metades continuam disabled (a metade so ALIMENTA o input-split).
      */
+    /*
+     * SENSIBILIDADE POR CAMADA (2026-07-27): dobra a cada camada (2^indice
+     * da camada) -- base=1x (sem filho, cai no processor incondicional),
+     * NAV=2x, SYM=4x, FUN=8x, EDIT=16x. Valores dentro do limite seguro do
+     * zip_*_scaler (recomendado ate 16) e ele acumula resto fracionario
+     * (track-remainders), diferente do scale-divisor do driver do
+     * joystick (que so trunca) -- sem risco de "morrer" como naquele caso.
+     *
+     * ORDEM dos filhos importa: o listener para no PRIMEIRO filho cuja
+     * camada bate (nao acumula). FUN implica NAV tambem ativa (aninhada),
+     * e EDIT implica SYM tambem ativa -- por isso FUN vem antes de NAV, e
+     * EDIT vem antes de SYM, senao a camada mais rasa venceria por engano.
+     */
     jsr_listener: jsr_listener {
         compatible = "zmk,input-listener";
         device = <&jsr_split>;
         status = "disabled";
-        /* SCROLL FIXO, sem depender de camada -- processor no nivel base
-         * do listener (nao num filho com "layers") roda em toda entrada,
-         * incondicionalmente. Design antigo (troca por camada) documentado
-         * errado na memoria do projeto; nunca foi a intencao real. */
+        /* base = SCROLL fixo em 1x (mapeador incondicional, sem filho de
+         * camada correspondente -- roda pra qualquer camada nao listada
+         * abaixo, ou seja, so a base mesmo). */
         input-processors = <&zip_xy_to_scroll_mapper>;
+
+        fun_2x { // FUN (camada 3) = 8x -- vem antes de nav_2x de proposito
+            layers = <3>;
+            input-processors = <&zip_xy_to_scroll_mapper>, <&zip_scroll_scaler 8 1>;
+        };
+        edit_2x { // EDIT (camada 4) = 16x -- vem antes de sym_2x de proposito
+            layers = <4>;
+            input-processors = <&zip_xy_to_scroll_mapper>, <&zip_scroll_scaler 16 1>;
+        };
+        nav_2x { // NAV (camada 1) = 2x
+            layers = <1>;
+            input-processors = <&zip_xy_to_scroll_mapper>, <&zip_scroll_scaler 2 1>;
+        };
+        sym_2x { // SYM (camada 2) = 4x
+            layers = <2>;
+            input-processors = <&zip_xy_to_scroll_mapper>, <&zip_scroll_scaler 4 1>;
+        };
     };
 
     jsl_listener: jsl_listener {
         compatible = "zmk,input-listener";
         device = <&jsl_split>;
-        status = "disabled";   // cursor puro (sem processor)
+        status = "disabled";   // base = cursor puro em 1x (sem processor)
+
+        fun_2x {
+            layers = <3>;
+            input-processors = <&zip_xy_scaler 8 1>;
+        };
+        edit_2x {
+            layers = <4>;
+            input-processors = <&zip_xy_scaler 16 1>;
+        };
+        nav_2x {
+            layers = <1>;
+            input-processors = <&zip_xy_scaler 2 1>;
+        };
+        sym_2x {
+            layers = <2>;
+            input-processors = <&zip_xy_scaler 4 1>;
+        };
     };
 };
 
