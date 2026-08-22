@@ -6,6 +6,11 @@ include:
   - board: nice_nano//zmk
     shield: jstest
 
+  # Teste isolado do sensor optico PMW3610DM-SUDU, mouse USB standalone.
+  # Ver "pmw3610 esquema eletrico.svg" na raiz do projeto pra fiacao.
+  - board: nice_nano//zmk
+    shield: pmw3610_test
+
   # Limpa TODOS os settings (pareamento/bonds inclusive). Gravar quando uma
   # placa for trocada: a split casa por endereco BLE unico do chip, entao
   # metade pareada com dongle antigo NUNCA aceita o novo (ela faz advertising

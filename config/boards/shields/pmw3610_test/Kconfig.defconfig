@@ -1,0 +1,6 @@
+if SHIELD_PMW3610_TEST
+
+config ZMK_KEYBOARD_NAME
+    default "PMW3610Test"
+
+endif
