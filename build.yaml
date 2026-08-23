@@ -8,8 +8,11 @@ include:
 
   # Teste isolado do sensor optico PMW3610DM-SUDU, mouse USB standalone.
   # Ver "pmw3610 esquema eletrico.svg" na raiz do projeto pra fiacao.
+  # >>> TEMPORARIO: log USB (deferred) ligado pra diagnosticar o sensor nao
+  # mexendo o cursor -- tirar o snippet depois que resolver. <<<
   - board: nice_nano//zmk
     shield: pmw3610_test
+    snippet: zmk-usb-logging
 
   # Limpa TODOS os settings (pareamento/bonds inclusive). Gravar quando uma
   # placa for trocada: a split casa por endereco BLE unico do chip, entao
