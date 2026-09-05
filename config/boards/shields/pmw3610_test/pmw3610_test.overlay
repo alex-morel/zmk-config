@@ -117,10 +117,10 @@
         scroller {
             layers = <1>;
             /* zip_xy_scaler <multiplicador> <divisor>, ANTES do mapper --
-             * reduz o movimento bruto pra 1/4 antes de virar scroll (pedido
-             * explicito, "scroll rapido demais"). Ajustar o divisor se
-             * precisar mais/menos sensibilidade. */
-            input-processors = <&zip_xy_scaler 1 4>, <&zip_xy_to_scroll_mapper>;
+             * reduz o movimento bruto pra 1/8 antes de virar scroll (era
+             * 1/4, pedido explicito de reduzir mais). Ajustar o divisor
+             * se precisar mais/menos sensibilidade. */
+            input-processors = <&zip_xy_scaler 1 8>, <&zip_xy_to_scroll_mapper>;
         };
     };
 };
