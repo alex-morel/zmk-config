@@ -15,9 +15,9 @@ config ZMK_SPLIT_ROLE_CENTRAL
     select ZMK_WIDGET_LAYER_STATUS
     select ZMK_WIDGET_OUTPUT_STATUS
 
-# Duas metades conectam no dongle (antes: 1 periferico no central).
+# Duas metades + trackball conectam no dongle (antes: 2 perifericos).
 config ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS
-    default 2
+    default 3
 
 endif
 

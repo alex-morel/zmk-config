@@ -17,14 +17,15 @@
  *   left/right = perifericos (cada um manda sua POSICAO ja transformada;
  *   o col-offset por lado deixa as posicoes unicas: esq 0-5, dir 6-11).
  *
- * JOYSTICKS via input-split:
+ * JOYSTICKS + TRACKBALL via input-split:
  *   O roteamento do input-split e SO por 'reg' (tem que ser unico global):
  *     jsr_split reg=0  <- joystick DIREITO
  *     jsl_split reg=1  <- joystick ESQUERDO
- *   Cada periferico habilita SO o seu (com device=<&anin_...>); o outro fica
- *   disabled (input-split de periferico sem device = erro de build). No dongle,
- *   os dois ficam okay (modo central/proxy, sem device) e cada listener escuta
- *   o seu reg.
+ *     tb_split  reg=2  <- trackball (sensor PMW3610, periferico pmw3610_test)
+ *   Cada periferico habilita SO o seu (com device=<&anin_...> / <&trackball>);
+ *   os outros ficam disabled (input-split de periferico sem device = erro de
+ *   build). No dongle, os tres ficam okay (modo central/proxy, sem device) e
+ *   cada listener escuta o seu reg.
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
@@ -40,7 +41,7 @@
 
     default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
-        columns = <12>;
+        columns = <18>;
         rows = <4>;
         // Esquerda (cols 0-5)                              Direita (cols 6-11)
         map = <
@@ -48,8 +49,12 @@ RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4) RC(0,5)   RC(0,6) RC(0,7) RC(0,8) RC(0,9
 RC(1,0) RC(1,1) RC(1,2) RC(1,3) RC(1,4) RC(1,5)   RC(1,6) RC(1,7) RC(1,8) RC(1,9) RC(1,10) RC(1,11)
 RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9) RC(2,10) RC(2,11)
         RC(3,0) RC(3,1) RC(3,2) RC(3,3) RC(3,4)   RC(3,6) RC(3,7) RC(3,8) RC(3,9) RC(3,10)
+        RC(0,12) RC(0,13) RC(0,14)   RC(0,15) RC(0,16) RC(0,17)
         >;
         // Linha 3 (por lado): [pol0 pol1 pol2 idx-extra-C3 idx-extra-C4]
+        // Ultima linha: trackball (periferico pmw3610_test, col-offset=12) --
+        // [A1 A2 A3] [B1 B2 B3], mesma ordem fisica do assembly() em
+        // trackball.scad. Posicoes 46-51 (indice 0 = RC(0,0) no topo).
     };
 
     /*
@@ -69,6 +74,12 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
         jsl_split: jsl_split@1 {          /* joystick ESQUERDO */
             compatible = "zmk,input-split";
             reg = <1>;
+            status = "disabled";
+        };
+
+        tb_split: tb_split@2 {            /* trackball (sensor PMW3610) */
+            compatible = "zmk,input-split";
+            reg = <2>;
             status = "disabled";
         };
     };
@@ -138,6 +149,23 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
         sym_2x {
             layers = <2>;
             input-processors = <&zip_xy_scaler 4 1>;
+        };
+    };
+
+    /* Listener do TRACKBALL. Base = cursor puro (sem processor). Segurar o
+     * &tog 5 (clique do meio da trackball, ver trackball_layer no
+     * splitkb.keymap) ativa a camada 5 -- enquanto ela estiver ativa, mover
+     * a bola vira SCROLL (zip_xy_to_scroll_mapper) em vez de mover o cursor.
+     * zip_xy_scaler 1 8 reduz a sensibilidade do scroll pra 1/8 (pedido
+     * explicito, "scroll rapido demais"). */
+    tb_listener: tb_listener {
+        compatible = "zmk,input-listener";
+        device = <&tb_split>;
+        status = "disabled";
+
+        scroller {
+            layers = <5>;
+            input-processors = <&zip_xy_scaler 1 8>, <&zip_xy_to_scroll_mapper>;
         };
     };
 };

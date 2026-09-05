@@ -1,34 +1,13 @@
-#include <behaviors.dtsi>
-#include <dt-bindings/zmk/keys.h>
-#include <dt-bindings/zmk/pointing.h>
-
-/ {
-    keymap {
-        compatible = "zmk,keymap";
-
-        default_layer {
-            /* 6 botoes da trackball (kscan-gpio-direct, ver overlay) --
-             * O movimento do mouse vem do sensor PMW3610, so os cliques
-             * passam pelo keymap. MB1/MB2 (esquerdo/direito) na mesma
-             * ordem ja usada nas thumb keys do splitkb.keymap, duplicada
-             * nos dois grupos fisicos (A e B) pra dar acesso aos cliques
-             * dos dois lados da bola.
-             *
-             * O clique do MEIO virou &tog 1 (liga/desliga o modo scroll,
-             * ver scroll_layer abaixo e o "scroller" no overlay) -- pedido
-             * explicito, era &mkp MB3. */
-            bindings = <&tog 1 &mkp MB1 &mkp MB2   &tog 1 &mkp MB1 &mkp MB2>;
-        };
-
-        /* Modo SCROLL -- ativado/desativado pelo &tog 1 acima (toggle, nao
-         * precisa segurar). Enquanto essa camada estiver ativa, o overlay
-         * troca o input-processor do trackball_listener pra
-         * zip_xy_to_scroll_mapper (ver "scroller" no pmw3610_test.overlay):
-         * mover a bola vira scroll em vez de mover o cursor. Os cliques
-         * ficam transparentes (&trans cai pra default_layer, inclusive o
-         * proprio &tog 1 -- apertar nele de novo desliga o modo scroll). */
-        scroll_layer {
-            bindings = <&trans &trans &trans   &trans &trans &trans>;
-        };
-    };
-};
+/*
+ * A trackball agora e PERIFERICO do splitkb_dongle (ver
+ * pmw3610_test.overlay) e compartilha o MESMO physical-layout de 52
+ * posicoes (default_layout, splitkb-common.dtsi) -- por isso precisa de um
+ * zmk,keymap com bindings do mesmo tamanho. Perifericos nao interpretam
+ * keymap de verdade (so a CENTRAL/dongle faz isso; o periferico so usa o
+ * kscan+transform pra saber qual POSICAO GLOBAL reportar por BLE), entao
+ * as 46 primeiras posicoes aqui (as teclas de digitar, que esta peca nunca
+ * aciona -- o kscan dela so cobre as posicoes 46-51, os proprios botoes)
+ * sao so placeholder pra bater a contagem. Reusa o keymap de verdade
+ * (splitkb.keymap) por #include em vez de duplicar -- evita divergencia.
+ */
+#include "splitkb.keymap"

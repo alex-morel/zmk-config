@@ -110,6 +110,8 @@
  */
 &jsr_split { status = "okay"; };    /* joystick direito (reg=0) */
 &jsl_split { status = "okay"; };    /* joystick esquerdo (reg=1) */
+&tb_split  { status = "okay"; };    /* trackball (reg=2) */
 
 &jsr_listener { status = "okay"; };  /* direito: cursor, scroll na layer 1 */
 &jsl_listener { status = "okay"; };  /* esquerdo: cursor */
+&tb_listener  { status = "okay"; };  /* trackball: cursor, scroll na layer 5 */

@@ -102,29 +102,32 @@ static void layer_update_cb(struct layer_state s) {
 ZMK_DISPLAY_WIDGET_LISTENER(dongle_layer, struct layer_state, layer_update_cb, layer_get_state)
 ZMK_SUBSCRIPTION(dongle_layer, zmk_layer_state_changed);
 
-/* ---------- bateria das METADES (perifericos) ----------
+/* ---------- bateria dos PERIFERICOS (metades + trackball) ----------
  * O central recebe zmk_peripheral_battery_state_changed com .source = indice
  * do slot do periferico.
  *
  * CUIDADO (motivo do g_seen): no ZMK o array de niveis nasce zerado, entao um
  * periferico que NUNCA conectou le 0 -- igualzinho a "bateria vazia". Por isso
- * so mostramos numero de quem ja mandou dado; o resto fica "--". Assim a
- * metade direita (ainda nao montada) aparece como ausente, nao como 0%.
+ * so preenchemos o icone de quem ja mandou dado; o resto fica vazio. Assim um
+ * periferico ainda nao montado aparece como ausente, nao como 0%.
  *
  * OBS: .source e o indice do SLOT, atribuido por ordem de conexao -- nao e
- * fixo "esquerda/direita". Por isso as duas nao levam rotulo L/R. */
-#define PERIPH_N 2
+ * fixo "esquerda/direita/trackball".
+ *
+ * AJUSTADO (pedido explicito, "caber a bateria da trackball"): removido o
+ * numero da porcentagem (so o icone fica, sem lv_label) -- 3 icones com
+ * numero nao cabiam OK na tela; so o preenchimento ja da a leitura visual. */
+#define PERIPH_N 3
 #define BATT_W 44        /* largura do corpo do icone */
 #define BATT_H 20
 #define BATT_INNER 36    /* largura util do preenchimento */
 
 static lv_obj_t *g_batt_fill[PERIPH_N];
-static lv_obj_t *g_batt_lbl[PERIPH_N];
 static uint8_t g_batt_level[PERIPH_N];
 static bool g_batt_seen[PERIPH_N];
 
 static void batt_refresh(int i) {
-    if (g_batt_fill[i] == NULL || g_batt_lbl[i] == NULL) {
+    if (g_batt_fill[i] == NULL) {
         return;
     }
     if (g_batt_seen[i]) {
@@ -132,16 +135,16 @@ static void batt_refresh(int i) {
         int w = (BATT_INNER * pct) / 100;
         lv_obj_set_width(g_batt_fill[i], w > 1 ? w : 1);
         lv_obj_set_style_opa(g_batt_fill[i], LV_OPA_COVER, LV_PART_MAIN);
-        lv_label_set_text_fmt(g_batt_lbl[i], "%d", pct);
     } else {
-        /* nunca conectou: icone vazio + "--" (nao mostrar 0, seria enganoso) */
+        /* nunca conectou: icone vazio (nao mostrar cheio, seria enganoso) */
         lv_obj_set_style_opa(g_batt_fill[i], LV_OPA_TRANSP, LV_PART_MAIN);
-        lv_label_set_text(g_batt_lbl[i], "--");
     }
 }
 
-/* monta um icone de bateria (contorno + preenchimento + polo) e o numero */
-static void batt_create(lv_obj_t *parent, int i, lv_coord_t x_ofs) {
+/* monta um icone de bateria (contorno + preenchimento + polo), SEM numero.
+ * y_ofs proprio por icone -- as duas metades ficam lado a lado numa linha,
+ * a trackball fica sozinha numa linha ABAIXO delas. */
+static void batt_create(lv_obj_t *parent, int i, lv_coord_t x_ofs, lv_coord_t y_ofs) {
     lv_obj_t *box = lv_obj_create(parent);
     lv_obj_remove_style_all(box);
     lv_obj_set_size(box, BATT_W, BATT_H);
@@ -149,7 +152,7 @@ static void batt_create(lv_obj_t *parent, int i, lv_coord_t x_ofs) {
     lv_obj_set_style_border_width(box, 2, LV_PART_MAIN);
     lv_obj_set_style_border_opa(box, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_radius(box, 3, LV_PART_MAIN);
-    lv_obj_align(box, LV_ALIGN_BOTTOM_MID, x_ofs, -48);
+    lv_obj_align(box, LV_ALIGN_BOTTOM_MID, x_ofs, y_ofs);
 
     g_batt_fill[i] = lv_obj_create(box);
     lv_obj_remove_style_all(g_batt_fill[i]);
@@ -164,11 +167,7 @@ static void batt_create(lv_obj_t *parent, int i, lv_coord_t x_ofs) {
     lv_obj_set_size(nub, 4, 8);
     lv_obj_set_style_bg_color(nub, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(nub, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_align(nub, LV_ALIGN_BOTTOM_MID, x_ofs + BATT_W / 2 + 2, -54);
-
-    g_batt_lbl[i] = lv_label_create(parent);
-    lv_obj_set_style_text_color(g_batt_lbl[i], lv_color_white(), LV_PART_MAIN);
-    lv_obj_align(g_batt_lbl[i], LV_ALIGN_BOTTOM_MID, x_ofs, -22);
+    lv_obj_align(nub, LV_ALIGN_BOTTOM_MID, x_ofs + BATT_W / 2 + 2, y_ofs - 6);
 
     batt_refresh(i);
 }
@@ -522,9 +521,12 @@ lv_obj_t *zmk_display_status_screen() {
     lv_obj_align(g_layer_lbl, LV_ALIGN_CENTER, 0, 0);
     dongle_layer_init();
 
-    /* bateria das duas metades, lado a lado na parte de baixo */
-    batt_create(screen, 0, -38);
-    batt_create(screen, 1, 38);
+    /* bateria dos perifericos: as duas metades lado a lado, a trackball
+     * sozinha numa linha abaixo delas (pedido explicito, "adicione um
+     * icone de bateria... abaixo dos dois icones atuais"). */
+    batt_create(screen, 0, -38, -48);
+    batt_create(screen, 1, 38, -48);
+    batt_create(screen, 2, 0, -14);
     dongle_periph_batt_init();
 
     boot_animation(screen);

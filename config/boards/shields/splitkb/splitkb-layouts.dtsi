@@ -65,6 +65,14 @@
             , <&key_physical_attrs 100 100 1100  311       0     0     0>
             , <&key_physical_attrs 100 100  916  447       0     0     0>
             , <&key_physical_attrs 100 100  800  500       0     0     0>
+
+            // Trackball (periferico pmw3610_test) -- A1 A2 A3 / B1 B2 B3
+            , <&key_physical_attrs 100 100  460  650       0     0     0>
+            , <&key_physical_attrs 100 100  580  650       0     0     0>
+            , <&key_physical_attrs 100 100  700  650       0     0     0>
+            , <&key_physical_attrs 100 100  820  650       0     0     0>
+            , <&key_physical_attrs 100 100  940  650       0     0     0>
+            , <&key_physical_attrs 100 100 1060  650       0     0     0>
             ;
     };
 };

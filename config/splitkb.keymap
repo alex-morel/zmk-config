@@ -74,6 +74,8 @@
 //  └─────┴─────┴─────┼─────┼─────┼─────┤     ├─────┼─────┼─────┼─────┼─────┴─────┘
                   &mo 2 &kp SPACE &kp LGUI  &kp LALT &kp LCTRL       &mo 1 &kp RET &kp RALT  &kp BSPC &kp DEL
 //                 SYM                                                NAV
+   &tog 5 &mkp MB1 &mkp MB2   &tog 5 &mkp MB1 &mkp MB2
+// trackball: A1(toggle scroll) A2(clique esq) A3(clique dir)  B1 B2 B3
             >;
         };
 
@@ -88,6 +90,7 @@
 // polegar esquerdo: FUN (aninhado) + cliques do mouse (MB3=meio,MB1=esq,MB2=dir)
                 &mo 3 &mkp MB3 &mkp MB1 &mkp MB2 &trans       &trans &trans &trans &trans &trans
 //               FUN                                           NAV (self)
+   &trans &trans &trans   &trans &trans &trans
             >;
         };
 
@@ -100,6 +103,7 @@
 // polegar direito: EDIT aninhado (segura SYM, dai segura essa tecla tambem)
                     &trans &trans &trans &trans &trans            &mo 4  &trans &trans &trans &trans
 //                   SYM (self)                                    EDIT
+   &trans &trans &trans   &trans &trans &trans
             >;
         };
 
@@ -113,6 +117,7 @@
    &trans &trans &trans &trans &trans &trans       &trans &trans &trans &trans &trans &trans
                  &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans
 //                SYM (segurada junto)                  EDIT (self)
+   &trans &trans &trans   &trans &trans &trans
             >;
         };
 
@@ -124,13 +129,31 @@
    &trans &trans &trans &trans &trans &trans       &trans &trans &trans &trans  &trans  &trans
                  &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans
 //                FUN (self)                          NAV (segurada junto)
+   &trans &trans &trans   &trans &trans &trans
             >;
         };
 
-        /* 27 camadas RESERVADAS (total 32 = teto do ZMK, mascara uint32).
+        /* Camada 5 -- NAO reservada, consumida pra trackball (ver
+         * tb_listener em splitkb-common.dtsi). So serve de FLAG: nao
+         * redefine nenhuma tecla do teclado (tudo &trans, cai pra
+         * base_layer) -- ativada/desativada pelo &tog 5 no lugar do clique
+         * do meio da trackball (ver base_layer). Enquanto ativa, mover a
+         * bola vira scroll em vez de mover o cursor. */
+        trackball_layer {
+            display-name = "TB SCROLL";
+            bindings = <
+   &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+   &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+   &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                 &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans
+   &trans &trans &trans   &trans &trans &trans
+            >;
+        };
+
+        /* 26 camadas RESERVADAS (total 32 = teto do ZMK, mascara uint32;
+         * uma a menos que antes, consumida pela trackball_layer acima).
          * Nao existem no firmware ate serem ativadas pelo ZMK Studio, onde
          * aparecem como camadas extras pra criar/renomear/preencher. */
-        extra_01 { status = "reserved"; };
         extra_02 { status = "reserved"; };
         extra_03 { status = "reserved"; };
         extra_04 { status = "reserved"; };
