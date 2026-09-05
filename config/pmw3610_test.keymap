@@ -9,12 +9,26 @@
         default_layer {
             /* 6 botoes da trackball (kscan-gpio-direct, ver overlay) --
              * O movimento do mouse vem do sensor PMW3610, so os cliques
-             * passam pelo keymap. Mesma ordem MB3/MB1/MB2 ja usada nas
-             * thumb keys do splitkb.keymap (meio/esquerdo/direito),
-             * duplicada nos dois grupos fisicos (A e B) pra dar acesso
-             * aos 3 cliques dos dois lados da bola. AJUSTAR se quiser
-             * outra combinacao. */
-            bindings = <&mkp MB3 &mkp MB1 &mkp MB2   &mkp MB3 &mkp MB1 &mkp MB2>;
+             * passam pelo keymap. MB1/MB2 (esquerdo/direito) na mesma
+             * ordem ja usada nas thumb keys do splitkb.keymap, duplicada
+             * nos dois grupos fisicos (A e B) pra dar acesso aos cliques
+             * dos dois lados da bola.
+             *
+             * O clique do MEIO virou &tog 1 (liga/desliga o modo scroll,
+             * ver scroll_layer abaixo e o "scroller" no overlay) -- pedido
+             * explicito, era &mkp MB3. */
+            bindings = <&tog 1 &mkp MB1 &mkp MB2   &tog 1 &mkp MB1 &mkp MB2>;
+        };
+
+        /* Modo SCROLL -- ativado/desativado pelo &tog 1 acima (toggle, nao
+         * precisa segurar). Enquanto essa camada estiver ativa, o overlay
+         * troca o input-processor do trackball_listener pra
+         * zip_xy_to_scroll_mapper (ver "scroller" no pmw3610_test.overlay):
+         * mover a bola vira scroll em vez de mover o cursor. Os cliques
+         * ficam transparentes (&trans cai pra default_layer, inclusive o
+         * proprio &tog 1 -- apertar nele de novo desliga o modo scroll). */
+        scroll_layer {
+            bindings = <&trans &trans &trans   &trans &trans &trans>;
         };
     };
 };

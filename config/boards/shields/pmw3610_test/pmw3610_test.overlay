@@ -1,4 +1,5 @@
 #include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <input/processors.dtsi>
 
 /*
  * Shield de teste do sensor optico PMW3610DM-SUDU, mouse USB standalone.
@@ -107,5 +108,15 @@
     trackball_listener: trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
+
+        /* modo SCROLL -- pedido explicito, troca o clique do meio (era
+         * &mkp MB3, ver pmw3610_test.keymap) por um &tog 1 (toggle da
+         * scroll_layer). Enquanto essa camada estiver ativa, o movimento
+         * da bola vira scroll (zip_xy_to_scroll_mapper, input-processor
+         * built-in do ZMK) em vez de mover o cursor. */
+        scroller {
+            layers = <1>;
+            input-processors = <&zip_xy_to_scroll_mapper>;
+        };
     };
 };
