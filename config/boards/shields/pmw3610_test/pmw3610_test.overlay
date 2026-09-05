@@ -116,7 +116,11 @@
          * built-in do ZMK) em vez de mover o cursor. */
         scroller {
             layers = <1>;
-            input-processors = <&zip_xy_to_scroll_mapper>;
+            /* zip_xy_scaler <multiplicador> <divisor>, ANTES do mapper --
+             * reduz o movimento bruto pra 1/4 antes de virar scroll (pedido
+             * explicito, "scroll rapido demais"). Ajustar o divisor se
+             * precisar mais/menos sensibilidade. */
+            input-processors = <&zip_xy_scaler 1 4>, <&zip_xy_to_scroll_mapper>;
         };
     };
 };
