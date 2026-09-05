@@ -70,15 +70,13 @@
         res-cpi = <600>;                  /* 200..3200, passo 200 -- ajustar ao gosto */
         zephyr,axis-x = <INPUT_REL_X>;
         zephyr,axis-y = <INPUT_REL_Y>;
-        /* invert-x/invert-y REMOVIDOS: testados a fundo com captura ao vivo do
-         * log (zmk_hid_mouse_movement_set), com os dois bits LIGADOS -- direita
-         * deu X negativo, esquerda deu X positivo, cima deu Y positivo, baixo
-         * deu Y negativo: TODOS os 4 continuaram com o sinal trocado mesmo com
-         * o bit de inversao do sensor ligado. Ou seja, o bit invert-x/invert-y
-         * do registro RES_STEP do chip nao esta fazendo efeito nenhum aqui
-         * (nem X nem Y) -- inversao movida pra camada de software do ZMK
-         * (zip_xy_transform, ver trackball_listener abaixo), que nao depende
-         * desse registro. */
+        /* RETESTE (pedido explicito, "pode ter copiado o arquivo errado antes")
+         * -- religando invert-x/invert-y no proprio sensor de novo, ISOLADO
+         * (sem o zip_xy_transform ao mesmo tempo, senao uma inversao cancela
+         * a outra e o teste fica sem sentido). Ver trackball_listener abaixo:
+         * input-processors comentado por enquanto. */
+        invert-x;
+        invert-y;
     };
 };
 
@@ -110,10 +108,9 @@
     trackball_listener: trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
-        /* inversao dos dois eixos em SOFTWARE (ver nota acima no node
-         * trackball@0 -- o bit de hardware invert-x/invert-y do sensor nao
-         * fazia efeito). zip_xy_transform e um input-processor built-in do
-         * ZMK, independente do driver do sensor. */
-        input-processors = <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>;
+        /* DESLIGADO pro reteste isolado do invert-x/invert-y do sensor (ver
+         * trackball@0 acima) -- religar se o reteste confirmar que o bit do
+         * sensor mesmo nao funciona. */
+        // input-processors = <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>;
     };
 };
