@@ -68,9 +68,10 @@
         res-cpi = <600>;                  /* 200..3200, passo 200 -- ajustar ao gosto */
         zephyr,axis-x = <INPUT_REL_X>;
         zephyr,axis-y = <INPUT_REL_Y>;
-        // invert-x;
-        // invert-y;   /* datasheet: eixo Y bruto e "pra cima = positivo";
-                        // a maioria dos SOs espera invertido (ver esquema) */
+        invert-x;   /* pedido explicito: cursor ia pra esquerda quando devia ir pra direita */
+        invert-y;   /* pedido explicito: cursor descia quando devia subir -- confirma o que
+                     * o datasheet ja avisava (eixo Y bruto e "pra cima = positivo",
+                     * maioria dos SOs espera invertido) */
     };
 };
 
