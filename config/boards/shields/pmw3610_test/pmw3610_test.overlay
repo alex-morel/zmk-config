@@ -1,6 +1,4 @@
 #include <zephyr/dt-bindings/input/input-event-codes.h>
-#include <input/processors.dtsi>
-#include <dt-bindings/zmk/input_transform.h>
 
 /*
  * Shield de teste do sensor optico PMW3610DM-SUDU, mouse USB standalone.
@@ -70,11 +68,12 @@
         res-cpi = <600>;                  /* 200..3200, passo 200 -- ajustar ao gosto */
         zephyr,axis-x = <INPUT_REL_X>;
         zephyr,axis-y = <INPUT_REL_Y>;
-        /* RETESTE (pedido explicito, "pode ter copiado o arquivo errado antes")
-         * -- religando invert-x/invert-y no proprio sensor de novo, ISOLADO
-         * (sem o zip_xy_transform ao mesmo tempo, senao uma inversao cancela
-         * a outra e o teste fica sem sentido). Ver trackball_listener abaixo:
-         * input-processors comentado por enquanto. */
+        /* CONFIRMADO por teste (log ao vivo + confirmacao direta): os bits de
+         * inversao do proprio sensor funcionam normalmente -- a suspeita
+         * anterior de que nao faziam efeito era um .uf2 antigo/errado gravado
+         * por engano, nao um bug real do driver/chip. Cursor descia quando
+         * devia subir e ia pra esquerda quando devia ir pra direita antes
+         * disso. */
         invert-x;
         invert-y;
     };
@@ -108,9 +107,5 @@
     trackball_listener: trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
-        /* DESLIGADO pro reteste isolado do invert-x/invert-y do sensor (ver
-         * trackball@0 acima) -- religar se o reteste confirmar que o bit do
-         * sensor mesmo nao funciona. */
-        // input-processors = <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>;
     };
 };
