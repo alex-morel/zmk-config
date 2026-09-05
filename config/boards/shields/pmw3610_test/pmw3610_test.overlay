@@ -1,5 +1,6 @@
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 #include <input/processors.dtsi>
+#include <dt-bindings/zmk/input_transform.h>
 
 /*
  * Shield de teste do sensor optico PMW3610DM-SUDU, mouse USB standalone.
