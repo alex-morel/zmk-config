@@ -68,13 +68,10 @@
         res-cpi = <600>;                  /* 200..3200, passo 200 -- ajustar ao gosto */
         zephyr,axis-x = <INPUT_REL_X>;
         zephyr,axis-y = <INPUT_REL_Y>;
-        // invert-x;   /* DESATIVADO de novo -- nao teve efeito perceptivel (direita/
-                        // esquerda continuou igual mesmo com o bit ligado no sensor,
-                        // testado com o .uf2 correto). Pra investigar depois com log
-                        // ao vivo se precisar mesmo dela. */
-        invert-y;   /* pedido explicito: cursor descia quando devia subir -- confirma o que
-                     * o datasheet ja avisava (eixo Y bruto e "pra cima = positivo",
-                     * maioria dos SOs espera invertido). Essa funcionou. */
+        invert-x;   /* RE-ATIVADO pra reteste mais a fundo (pedido explicito "inverta
+                     * todos os eixos") -- da vez anterior nao teve efeito perceptivel
+                     * sozinho, testando de novo junto com invert-y pra comparar. */
+        invert-y;   /* corrigiu cima/baixo da primeira vez, mantido. */
     };
 };
 
