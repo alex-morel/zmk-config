@@ -75,8 +75,13 @@
 };
 
 / {
-    /* kscan minimo (1 tecla, nao fiada) so pra o ZMK compilar/bootar --
-     * igual ao jstest. O foco deste build e testar o sensor, nao teclas. */
+    /* 6 botoes da trackball, ligacao DIRETA (kscan-gpio-direct) -- sem
+     * diodo, cada botao no seu proprio pino (D2..D7, livres -- D9/D10/D15/
+     * D16 ja sao do sensor PMW3610 acima). Ver "trackball_botoes esquema
+     * eletrico.svg" na raiz do projeto pra fiacao completa.
+     * Ordem do array = ordem fisica do assembly() em trackball.scad:
+     *   [0]=A1 [1]=A2 [2]=A3 (coluna x=0) [3]=B1 [4]=B2 [5]=B3 (coluna x=-70)
+     */
     chosen {
         zmk,kscan = &kscan0;
     };
@@ -84,7 +89,14 @@
     kscan0: kscan0 {
         compatible = "zmk,kscan-gpio-direct";
         wakeup-source;
-        input-gpios = <&pro_micro 14 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+        input-gpios
+            = <&pro_micro 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>   /* A1 */
+            , <&pro_micro 3 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>   /* A2 */
+            , <&pro_micro 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>   /* A3 */
+            , <&pro_micro 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>   /* B1 */
+            , <&pro_micro 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>   /* B2 */
+            , <&pro_micro 7 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>   /* B3 */
+            ;
     };
 
     trackball_listener: trackball_listener {
