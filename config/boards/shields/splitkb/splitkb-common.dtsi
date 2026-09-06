@@ -156,8 +156,8 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
      * &tog 5 (clique do meio da trackball, ver trackball_layer no
      * splitkb.keymap) ativa a camada 5 -- enquanto ela estiver ativa, mover
      * a bola vira SCROLL (zip_xy_to_scroll_mapper) em vez de mover o cursor.
-     * zip_xy_scaler 1 8 reduz a sensibilidade do scroll pra 1/8 (pedido
-     * explicito, "scroll rapido demais"). */
+     * zip_xy_scaler 1 10 reduz a sensibilidade do scroll pra 1/10 (era 1/8,
+     * pedido explicito de reduzir mais). */
     tb_listener: tb_listener {
         compatible = "zmk,input-listener";
         device = <&tb_split>;
@@ -165,7 +165,7 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
 
         scroller {
             layers = <5>;
-            input-processors = <&zip_xy_scaler 1 8>, <&zip_xy_to_scroll_mapper>;
+            input-processors = <&zip_xy_scaler 1 10>, <&zip_xy_to_scroll_mapper>;
         };
     };
 };
