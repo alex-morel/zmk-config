@@ -1,0 +1,19 @@
+/*
+ * Filtro de "trava de eixo" CUSTOMIZADO deste projeto -- pedido explicito
+ * pra forcar a trackball a se mover mais em linha reta. Uso:
+ * <&zip_xy_axislock RAZAO> (RAZAO = param1, em %; ex.: 35 = descarta o
+ * eixo secundario se a magnitude dele for menor que 35% da magnitude
+ * recente do eixo principal).
+ */
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+    /omit-if-no-ref/ zip_xy_axislock: zip_xy_axislock {
+        compatible = "zmk,input-processor-axislock";
+        #input-processor-cells = <1>;
+        type = <INPUT_EV_REL>;
+        x-code = <INPUT_REL_X>;
+        y-code = <INPUT_REL_Y>;
+    };
+};

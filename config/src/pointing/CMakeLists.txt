@@ -1,1 +1,1 @@
-target_sources_ifdef(CONFIG_ZMK_INPUT_PROCESSOR_DEADZONE app PRIVATE input_processor_deadzone.c)
+target_sources_ifdef(CONFIG_ZMK_INPUT_PROCESSOR_AXISLOCK app PRIVATE input_processor_axislock.c)
