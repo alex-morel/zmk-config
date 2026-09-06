@@ -1,0 +1,18 @@
+# Filtro de ruido/zona morta CUSTOMIZADO deste projeto (nao existe no ZMK
+# core) -- descarta eventos de movimento relativo com |valor| menor que o
+# limiar (param1), pra filtrar pequenos saltos/tremores da trackball
+# (folga mecanica residual) sem cortar movimento intencional maior.
+
+description: Input Processor que descarta movimentos relativos pequenos (zona morta / filtro de ruido)
+
+compatible: "zmk,input-processor-deadzone"
+
+include: ip_one_param.yaml
+
+properties:
+  type:
+    type: int
+    required: true
+  codes:
+    type: array
+    required: true

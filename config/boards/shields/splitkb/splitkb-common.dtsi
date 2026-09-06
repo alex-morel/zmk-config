@@ -30,6 +30,9 @@
 
 #include <dt-bindings/zmk/matrix_transform.h>
 #include <input/processors.dtsi>   // define os &zip_* (input processors, ex.: scroll)
+#include <input/processors/deadzone.dtsi>   // &zip_xy_deadzone -- filtro de ruido CUSTOMIZADO
+                                             // deste projeto (nao existe no ZMK core), ver
+                                             // config/src/pointing/input_processor_deadzone.c
 
 / {
     chosen {
@@ -152,20 +155,26 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
         };
     };
 
-    /* Listener do TRACKBALL. Base = cursor puro (sem processor). Segurar o
-     * &tog 5 (clique do meio da trackball, ver trackball_layer no
-     * splitkb.keymap) ativa a camada 5 -- enquanto ela estiver ativa, mover
-     * a bola vira SCROLL (zip_xy_to_scroll_mapper) em vez de mover o cursor.
-     * zip_xy_scaler 1 10 reduz a sensibilidade do scroll pra 1/10 (era 1/8,
-     * pedido explicito de reduzir mais). */
+    /* Listener do TRACKBALL. Base = cursor puro + filtro de ruido
+     * (zip_xy_deadzone, CUSTOMIZADO deste projeto -- descarta pequenos
+     * saltos/tremores residuais da bola, |delta|<2, sem cortar movimento
+     * intencional). Segurar o &tog 5 (clique do meio da trackball, ver
+     * trackball_layer no splitkb.keymap) ativa a camada 5 -- enquanto ela
+     * estiver ativa, mover a bola vira SCROLL (zip_xy_to_scroll_mapper)
+     * em vez de mover o cursor -- o filtro roda ali tambem, ANTES do
+     * scaler, pra nao virar "scroll fantasma" por jitter. zip_xy_scaler
+     * 1 10 reduz a sensibilidade do scroll pra 1/10 (era 1/8, pedido
+     * explicito de reduzir mais). */
     tb_listener: tb_listener {
         compatible = "zmk,input-listener";
         device = <&tb_split>;
         status = "disabled";
 
+        input-processors = <&zip_xy_deadzone 2>;
+
         scroller {
             layers = <5>;
-            input-processors = <&zip_xy_scaler 1 10>, <&zip_xy_to_scroll_mapper>;
+            input-processors = <&zip_xy_deadzone 2>, <&zip_xy_scaler 1 10>, <&zip_xy_to_scroll_mapper>;
         };
     };
 };

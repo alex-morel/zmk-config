@@ -1,0 +1,3 @@
+# zmk-config como modulo Zephyr proprio -- so pro filtro de ruido
+# customizado da trackball (ver zephyr/module.yml).
+rsource "src/pointing/Kconfig"

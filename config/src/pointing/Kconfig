@@ -1,0 +1,8 @@
+if ZMK_POINTING
+
+config ZMK_INPUT_PROCESSOR_DEADZONE
+    bool "Deadzone (noise filter) Input Processor"
+    default y
+    depends on DT_HAS_ZMK_INPUT_PROCESSOR_DEADZONE_ENABLED
+
+endif
