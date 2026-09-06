@@ -160,7 +160,7 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
      * "forcar a mover mais em linha reta"; substituiu o filtro de zona
      * morta/ruido anterior, que nao resolveu bem). Suprime o desvio
      * pequeno no eixo secundario quando o movimento e claramente
-     * dominante no outro eixo (razao 35% aqui) -- movimento diagonal de
+     * dominante no outro eixo (razao 50% aqui, era 35 -- pedido explicito de mais agressivo) -- movimento diagonal de
      * verdade (os dois eixos com magnitude parecida) passa normal. Segurar
      * o &tog 5 (clique do meio da trackball, ver trackball_layer no
      * splitkb.keymap) ativa a camada 5 -- enquanto ela estiver ativa, mover
@@ -172,11 +172,11 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5)   RC(2,6) RC(2,7) RC(2,8) RC(2,9
         device = <&tb_split>;
         status = "disabled";
 
-        input-processors = <&zip_xy_axislock 35>;
+        input-processors = <&zip_xy_axislock 50>;
 
         scroller {
             layers = <5>;
-            input-processors = <&zip_xy_axislock 35>, <&zip_xy_scaler 1 10>, <&zip_xy_to_scroll_mapper>;
+            input-processors = <&zip_xy_axislock 50>, <&zip_xy_scaler 1 10>, <&zip_xy_to_scroll_mapper>;
         };
     };
 };
