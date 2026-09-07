@@ -1,8 +1,0 @@
-if ZMK_POINTING
-
-config ZMK_INPUT_PROCESSOR_AXISLOCK
-    bool "Axis-lock (straighter movement) Input Processor"
-    default y
-    depends on DT_HAS_ZMK_INPUT_PROCESSOR_AXISLOCK_ENABLED
-
-endif

@@ -1,1 +1,0 @@
-target_sources_ifdef(CONFIG_ZMK_INPUT_PROCESSOR_AXISLOCK app PRIVATE input_processor_axislock.c)
