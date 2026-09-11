@@ -24,12 +24,12 @@ include:
 
   # --- Teclado split com DONGLE ---
   # O DONGLE e o central: roda o keymap, conecta no PC por USB, leva o Studio.
-  # >>> TEMPORARIO (2026-09-11, tentativa 2 -- so SMP em DBG desta vez, ver
-  # splitkb_dongle.conf): investigando pareamento BLE direto falhando.
-  # Restaurar studio-rpc-usb-uart + CONFIG_ZMK_STUDIO=y depois. <<<
+  # (Pra debugar: trocar o snippet por zmk-usb-logging -- log DEFERRED; nunca
+  # LOG_MODE_IMMEDIATE nem LV_USE_LOG, que travam o boot.)
   - board: nice_nano//zmk
     shield: splitkb_dongle
-    snippet: zmk-usb-logging
+    snippet: studio-rpc-usb-uart
+    cmake-args: -DCONFIG_ZMK_STUDIO=y
 
   # As duas metades sao perifericas (sem Studio, sem USB pro host).
   - board: nice_nano//zmk
